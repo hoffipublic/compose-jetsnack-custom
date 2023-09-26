@@ -38,4 +38,3 @@ plugins {
     id("buildLogic.binaryPlugins.ProjectInfosBuildLogicPlugin")
     id("VersionsUpgradeBuildLogic")
 }
-

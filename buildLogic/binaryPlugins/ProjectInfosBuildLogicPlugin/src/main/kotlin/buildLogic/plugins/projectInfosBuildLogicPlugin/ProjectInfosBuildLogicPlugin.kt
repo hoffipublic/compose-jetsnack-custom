@@ -80,25 +80,27 @@ internal abstract class VersionsPrintTask : DefaultTask() {
     @TaskAction
     fun run() {
         //val kotlin = project.extensions.findByType(org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension::class.java)!!
-        val kotlin = project.extensions.findByType(org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension::class.java)!!
-        val java = project.extensions.findByType(org.gradle.api.plugins.JavaPluginExtension::class.java)!!
+        val kotlin = project.extensions.findByType(org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension::class.java)
+        val java = project.extensions.findByType(org.gradle.api.plugins.JavaPluginExtension::class.java)
         val foreground = ConsoleColor.YELLOW
         val background = ConsoleColor.DEFAULT
         if (reportGradleVersion.get() && ! onlyJarVersionNamesByRegex.get()) {
             printlnColor(foreground, "Gradle version: " + project.gradle.gradleVersion, background)
         }
         if (reportKotlinVersion.get() && ! onlyJarVersionNamesByRegex.get()) {
-            printlnColor(foreground, "Kotlin version: " + kotlin.coreLibrariesVersion)
+            if (kotlin != null) printlnColor(foreground, "Kotlin version: " + kotlin.coreLibrariesVersion) else printlnColor(foreground, "Kotlin version: rootProject not a kotlin project")
         }
-        if (reportJvmVersion.get() && ! onlyJarVersionNamesByRegex.get()) {
-            printlnColor(foreground, "javac  version: " + org.gradle.internal.jvm.Jvm.current(), background) // + " with compiler args: " + options.compilerArgs, backgroundColor = ConsoleColor.DARK_GRAY)
-        }
-        if (reportSourceCompatibility.get() && ! onlyJarVersionNamesByRegex.get()) {
-            printlnColor(foreground, "       srcComp: " + java.sourceCompatibility, background)
-        }
-        if (reportTargetCompatibility.get() && ! onlyJarVersionNamesByRegex.get()) {
-            printlnColor(foreground, "       tgtComp: " + java.targetCompatibility, background)
-        }
+        if (java != null) {
+            if (reportJvmVersion.get() && ! onlyJarVersionNamesByRegex.get()) {
+                printlnColor(foreground, "javac  version: " + org.gradle.internal.jvm.Jvm.current(), background) // + " with compiler args: " + options.compilerArgs, backgroundColor = ConsoleColor.DARK_GRAY)
+            }
+            if (reportSourceCompatibility.get() && ! onlyJarVersionNamesByRegex.get()) {
+                printlnColor(foreground, "       srcComp: " + java.sourceCompatibility, background)
+            }
+            if (reportTargetCompatibility.get() && ! onlyJarVersionNamesByRegex.get()) {
+                printlnColor(foreground, "       tgtComp: " + java.targetCompatibility, background)
+            }
+        } else println("javac  version: rootProject not a jvm    project")
         if (reportSomeSelectedJarVersions.get()) {
             printlnColor(foreground, "versions of assorted core dependencies:", background)
             val regex = Regex(pattern = reportJarVersionsNameRegex.get())

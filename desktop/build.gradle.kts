@@ -13,9 +13,6 @@ version = "1.0-SNAPSHOT"
 
 kotlin {
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "11"
-        }
         withJava()
     }
     sourceSets {
@@ -40,7 +37,7 @@ compose.desktop {
     }
 }
 
-compose {
-    val composeVersion = project.property("compose.wasm.version") as String
-    kotlinCompilerPlugin.set(composeVersion)
-}
+//compose {
+//    val composeVersion = libs.versions.wasm.compose.get()
+//    kotlinCompilerPlugin.set(composeVersion)
+//}

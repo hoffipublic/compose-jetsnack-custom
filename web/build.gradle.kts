@@ -1,5 +1,5 @@
-import org.jetbrains.compose.compose
-import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
+//import org.jetbrains.compose.compose
+//import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
@@ -56,9 +56,9 @@ compose.experimental {
     web.application {}
 }
 
-compose {
-    val composeVersion = project.property("compose.wasm.version") as String
-    kotlinCompilerPlugin.set(composeVersion)
-    val kotlinVersion = project.property("kotlin.version") as String
-    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=$kotlinVersion")
-}
+//compose {
+//    val composeVersion = libs.versions.wasm.compose.get()
+//    kotlinCompilerPlugin.set(composeVersion)
+//    val kotlinVersion = libs.versions.kotlin.asProvider().get()
+//    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=$kotlinVersion")
+//}

@@ -1,4 +1,12 @@
+rootProject.name = "compose-jetsnack-custom"
+
 pluginManagement {
+    includeBuild("buildLogic")
+    // special case of included builds are builds that define Gradle plugins.
+    // These builds should be included using the includeBuild statement inside the pluginManagement {} block of the settings file.
+    // Using this mechanism, the included build may also contribute a settings plugin that can be applied in the settings file itself.
+    includeBuild("buildLogic/binaryPlugins/ProjectInfosBuildLogicPlugin")
+    includeBuild("buildLogic/binaryPlugins/ProjectSetupBuildLogicPlugin")
     repositories {
         google()
         gradlePluginPortal()
@@ -6,16 +14,26 @@ pluginManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
     }
+}
 
-    plugins {
-        kotlin("multiplatform").version(extra["kotlin.version"] as String)
-        //kotlin("android").version(extra["kotlin.version"] as String)
-        //id("com.android.application").version(extra["agp.version"] as String)
-        //id("com.android.library").version(extra["agp.version"] as String)
-        id("org.jetbrains.compose").version(extra["compose.wasm.version"] as String)
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT) // FAIL_ON_PROJECT_REPOS or PREFER_PROJECT or PREFER_SETTINGS)
+    repositories {
+        mavenCentral()
+        google()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
+    }
+    versionCatalogs {
+        create("libs") {
+            if (rootProject.name == "buildLogic") {
+                from(files(File(rootProject.projectDir, "libs.versions.toml"))) // that's where libs.versions.toml is located in the standalone master buildLogic git repo project))
+            } else {
+                from(files(File(rootProject.projectDir, "buildLogic/libs.versions.toml"))) // this is the standard case
+            }
+        }
     }
 }
 
-rootProject.name = "compose-jetsnack-custom"
 
-include(":desktop", ":common", ":web")
+include(":common", ":desktop", ":web")

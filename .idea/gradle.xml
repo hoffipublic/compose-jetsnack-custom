@@ -4,11 +4,35 @@
   <component name="GradleSettings">
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
+        <compositeConfiguration>
+          <compositeBuild compositeDefinitionSource="SCRIPT">
+            <builds>
+              <build path="$PROJECT_DIR$/buildLogic" name="buildLogic">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildLogic" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectInfosBuildLogicPlugin" name="ProjectInfosBuildLogicPlugin">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectInfosBuildLogicPlugin" />
+                </projects>
+              </build>
+              <build path="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectSetupBuildLogicPlugin" name="ProjectSetupBuildLogicPlugin">
+                <projects>
+                  <project path="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectSetupBuildLogicPlugin" />
+                </projects>
+              </build>
+            </builds>
+          </compositeBuild>
+        </compositeConfiguration>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="gradleJvm" value="#JAVA_HOME" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/buildLogic" />
+            <option value="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectInfosBuildLogicPlugin" />
+            <option value="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectSetupBuildLogicPlugin" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/desktop" />
             <option value="$PROJECT_DIR$/web" />

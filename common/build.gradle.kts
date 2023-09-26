@@ -10,9 +10,6 @@ version = "1.0-SNAPSHOT"
 
 kotlin {
     jvm("desktop") {
-        compilations.all {
-            kotlinOptions.jvmTarget = "11"
-        }
     }
     wasm {
         browser()
@@ -51,9 +48,9 @@ compose.experimental {
     web.application {}
 }
 
-compose {
-    val composeVersion = project.property("compose.wasm.version") as String
-    kotlinCompilerPlugin.set(composeVersion)
-    val kotlinVersion = project.property("kotlin.version") as String
-    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=$kotlinVersion")
-}
+//compose {
+//    val composeVersion = libs.versions.wasm.compose.get()
+//    kotlinCompilerPlugin.set(composeVersion)
+//    val kotlinVersion = libs.versions.kotlin.asProvider().get()
+//    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=$kotlinVersion")
+//}

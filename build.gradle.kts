@@ -17,11 +17,11 @@ allprojects {
             val isComposeGroup = requested.module.group.startsWith("org.jetbrains.compose")
             val isComposeCompiler = requested.module.group.startsWith("org.jetbrains.compose.compiler")
             if (isComposeGroup && !isComposeCompiler && !isWasm && !isJs) {
-                val composeVersion = project.property("compose.version") as String
+                val composeVersion = libs.versions.compose.get()
                 useVersion(composeVersion)
             }
             if (requested.module.name.startsWith("kotlin-stdlib")) {
-                val kotlinVersion = project.property("kotlin.version") as String
+                val kotlinVersion = libs.versions.kotlin.asProvider().get()
                 useVersion(kotlinVersion)
             }
         }
@@ -29,9 +29,13 @@ allprojects {
 }
 
 plugins {
-    kotlin("multiplatform") apply false
-    //kotlin("android") apply false
-    //id("com.android.application") apply false
-    //id("com.android.library") apply false
-    id("org.jetbrains.compose") apply false
+    kotlin("multiplatform") version libs.versions.kotlin.asProvider().get() apply false
+    //kotlin("android").version(extra["kotlin.version"] as String)
+    //id("com.android.application").version(extra["agp.version"] as String)
+    //id("com.android.library").version(extra["agp.version"] as String)
+    id("org.jetbrains.compose") version libs.versions.compose.get() apply false
+    id("buildLogic.binaryPlugins.ProjectSetupBuildLogicPlugin")
+    id("buildLogic.binaryPlugins.ProjectInfosBuildLogicPlugin")
+    id("VersionsUpgradeBuildLogic")
 }
+

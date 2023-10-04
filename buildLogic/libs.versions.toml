@@ -1,8 +1,8 @@
 # object BuildLogicGlobal in ROOT/buildLogic/src/main/kotlin via ROOT/buildLogic/src/main/kotlin/VersionCatalogExtensions.kt
 # libs.versions.toml should by standard be in 'ROOT/gradle/' folder
 [versions]
-android = "8.0.2"
 accompanist = "0.28.0"
+android = "8.0.2"
 androidGradlePlugin = "7.4.2"
 androidx-activity-compose = "1.7.2"
 androidx-appcompat = "1.6.1"
@@ -12,17 +12,20 @@ apache-poi = "5.2.3"
 arrow = "1.2.1"
 benasher44-uuid = "0.7.0"
 clikt = "4.2.0"
+# global https://github.com/JetBrains/compose-jb/releases or experimental: https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental/org/jetbrains/compose/desktop/desktop-jvm/
+compose = "1.5.1-dev-wasm01"
+compose-compiler = "1.5.1"
 exposed = "0.43.0"
-gradle-versions-catalogUpdate = "0.8.0"
+gradle-versions-catalogUpdate = "0.8.1"
 gradle-versions-filter = "0.1.16"
-gradle-versions-plugin = "0.47.0"
+gradle-versions-plugin = "0.48.0"
 h2 = "2.2.220"
 hamcrest = "2.2"
 # global
 jdkVersion = "17"
 jsoup = "1.16.1"
 junit-jupiter = "5.9.3"
-kermit = "2.0.0-RC4"
+kermit = "2.0.1"
 kodein = "7.20.1"
 koin = "3.5.0"
 kointest = "3.5.0"
@@ -31,8 +34,8 @@ kotest = "5.7.2"
 kotest-extensions-koin = "1.2.0"
 kotest-plugin = "0.4.10"
 # global
-kotlin = "1.9.0"
-kotlin-logging = "3.0.5"
+kotlin = "1.9.10"
+kotlin-logging = "5.1.0"
 kotlinpoet = "1.14.2"
 kotlinx-coroutines = "1.7.3"
 kotlinx-datetime = "0.4.1"
@@ -40,8 +43,6 @@ kotlinx-serialization-json = "1.6.0"
 kotlinx-serialization-kaml = "0.54.0"
 kotlinx-serialization-ktoml = "0.5.0"
 kotlinx-serialization-yamlkt = "0.13.0"
-# global https://github.com/JetBrains/compose-jb/releases or experimental: https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental/org/jetbrains/compose/desktop/desktop-jvm/
-compose = "1.4.0-dev-wasm09"
 ## https://kotlinlang.org/docs/wasm-libraries.html#supported-kotlin-libraries-for-kotlin-wasm
 #wasm-compose = "1.4.0-dev-wasm09"
 #wasm-coroutines = "1.7.0-RC-wasm0"
@@ -100,7 +101,7 @@ kotest-framework-dataset = { module = "io.kotest:kotest-framework-datatest", ver
 kotest-framework-engine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
-kotlin-logging = { module = "io.github.microutils:kotlin-logging", version.ref = "kotlin-logging" }
+kotlin-logging = { module = "io.github.oshai:kotlin-logging", version.ref = "kotlin-logging" }
 kotlin-test-annotations = { module = "org.jetbrains.kotlin:kotlin-test-annotations-common", version.ref = "kotlin" }
 kotlin-test-common = { module = "org.jetbrains.kotlin:kotlin-test-common", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }

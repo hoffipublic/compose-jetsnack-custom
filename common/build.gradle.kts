@@ -9,15 +9,19 @@ version = "1.0-SNAPSHOT"
 kotlin {
     jvm("desktop") {
     }
+    /* without WASM
     wasm {
         browser()
     }
+    */
     sourceSets {
         val commonMain by getting {
             dependencies {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
+                implementation("co.touchlab:kermit:${libs.versions.kermit.v()}")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${libs.versions.kotlinx.datetime.v()}")
             }
         }
         val nonAndroidMain by creating {
@@ -36,19 +40,23 @@ kotlin {
         }
         val desktopTest by getting
 
+        /* without WASM
         val wasmMain by getting {
             dependsOn(nonAndroidMain)
         }
+        */
     }
 }
 
+/* without WASM
 compose.experimental {
     web.application {}
 }
+*/
 
-//compose {
-//    val composeVersion = libs.versions.wasm.compose.get()
-//    kotlinCompilerPlugin.set(composeVersion)
-//    val kotlinVersion = libs.versions.kotlin.asProvider().get()
-//    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=$kotlinVersion")
-//}
+// if we wanna use special combinations of compose, kotlin and composeCompiler
+compose {
+    //kotlinCompilerPlugin.set(libs.versions.compose.asProvider().get())
+    kotlinCompilerPlugin.set(libs.versions.compose.compiler.get())
+    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=${libs.versions.kotlin.asProvider().get()}")
+}

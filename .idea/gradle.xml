@@ -35,7 +35,6 @@
             <option value="$PROJECT_DIR$/buildLogic/binaryPlugins/ProjectSetupBuildLogicPlugin" />
             <option value="$PROJECT_DIR$/common" />
             <option value="$PROJECT_DIR$/desktop" />
-            <option value="$PROJECT_DIR$/web" />
           </set>
         </option>
       </GradleProjectSettings>

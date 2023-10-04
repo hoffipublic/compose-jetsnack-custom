@@ -2,13 +2,6 @@ group "com.example"
 version "1.0-SNAPSHOT"
 
 allprojects {
-    repositories {
-        google()
-        mavenCentral()
-        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
-    }
-
     configurations.all {
         val conf = this
         conf.resolutionStrategy.eachDependency {
@@ -17,7 +10,7 @@ allprojects {
             val isComposeGroup = requested.module.group.startsWith("org.jetbrains.compose")
             val isComposeCompiler = requested.module.group.startsWith("org.jetbrains.compose.compiler")
             if (isComposeGroup && !isComposeCompiler && !isWasm && !isJs) {
-                val composeVersion = libs.versions.compose.get()
+                val composeVersion = libs.versions.compose.asProvider().get()
                 useVersion(composeVersion)
             }
             if (requested.module.name.startsWith("kotlin-stdlib")) {
@@ -29,11 +22,12 @@ allprojects {
 }
 
 plugins {
+    kotlin("jvm") version libs.versions.kotlin.asProvider().get()
     kotlin("multiplatform") version libs.versions.kotlin.asProvider().get() apply false
     //kotlin("android").version(extra["kotlin.version"] as String)
     //id("com.android.application").version(extra["agp.version"] as String)
     //id("com.android.library").version(extra["agp.version"] as String)
-    id("org.jetbrains.compose") version libs.versions.compose.get() apply false
+    id("org.jetbrains.compose") version libs.versions.compose.asProvider().get() apply false
     id("buildLogic.binaryPlugins.ProjectSetupBuildLogicPlugin")
     id("buildLogic.binaryPlugins.ProjectInfosBuildLogicPlugin")
     id("VersionsUpgradeBuildLogic")

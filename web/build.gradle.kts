@@ -56,9 +56,8 @@ compose.experimental {
     web.application {}
 }
 
-//compose {
-//    val composeVersion = libs.versions.wasm.compose.get()
-//    kotlinCompilerPlugin.set(composeVersion)
-//    val kotlinVersion = libs.versions.kotlin.asProvider().get()
-//    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=$kotlinVersion")
-//}
+compose {
+    //kotlinCompilerPlugin.set(libs.versions.compose.asProvider().get())
+    kotlinCompilerPlugin.set(libs.versions.compose.compiler.get())
+    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=${libs.versions.kotlin.asProvider().get()}")
+}

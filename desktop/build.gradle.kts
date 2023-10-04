@@ -31,13 +31,14 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "jetsnak-mpp"
+            packageName = rootProject.name
             packageVersion = "1.0.0"
         }
     }
 }
 
-//compose {
-//    val composeVersion = libs.versions.wasm.compose.get()
-//    kotlinCompilerPlugin.set(composeVersion)
-//}
+compose {
+    //kotlinCompilerPlugin.set(libs.versions.compose.asProvider().get())
+    kotlinCompilerPlugin.set(libs.versions.compose.compiler.get())
+    kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=${libs.versions.kotlin.asProvider().get()}")
+}

@@ -11,6 +11,7 @@ import androidx.compose.ui.window.CanvasBasedWindow
 import com.example.jetsnack.JetSnackAppEntryPoint
 import com.example.jetsnack.ui.theme.Karla
 import com.example.jetsnack.ui.theme.Montserrat
+import com.hoffi.compose.showcase.ShowcaseAppEntryPoint
 import kotlinx.coroutines.*
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -21,7 +22,11 @@ fun main() {
         if (loading) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         } else {
-            JetSnackAppEntryPoint()
+            if (false) {
+                JetSnackAppEntryPoint()
+            } else {
+                ShowcaseAppEntryPoint()
+            }
         }
 
         LaunchedEffect(Unit) {

@@ -13,6 +13,7 @@ pluginManagement {
         mavenCentral()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/") // bleeding edge
     }
 }
 
@@ -23,6 +24,8 @@ dependencyResolutionManagement {
         google()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/") // bleeding edge
+        maven("https://androidx.dev/storage/compose-compiler/repository/") // bleeding edge
     }
     versionCatalogs {
         create("libs") {
@@ -36,4 +39,4 @@ dependencyResolutionManagement {
 }
 
 
-include(":common", ":desktop", ":web")
+include(":common", ":desktop") /* without WASM , ":web") */

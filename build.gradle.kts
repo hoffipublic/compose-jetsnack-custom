@@ -22,7 +22,7 @@ allprojects {
 }
 
 plugins {
-    kotlin("jvm") version libs.versions.kotlin.asProvider().get()
+    //kotlin("jvm") version libs.versions.kotlin.asProvider().get()
     kotlin("multiplatform") version libs.versions.kotlin.asProvider().get() apply false
     //kotlin("android").version(extra["kotlin.version"] as String)
     //id("com.android.application").version(extra["agp.version"] as String)

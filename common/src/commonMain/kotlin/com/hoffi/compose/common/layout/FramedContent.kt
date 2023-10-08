@@ -66,7 +66,7 @@ private fun FramedContentLayout(
         }
 
         // ==========================================================================================================+
-        // measure each Panel and get back Placeable's for each
+        // measure each Panel and get back Placeable for each
         // ==========================================================================================================+
 
         val looseConstraints = constraints.copy(minWidth = 0, minHeight = 0)

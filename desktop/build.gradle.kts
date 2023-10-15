@@ -38,7 +38,6 @@ compose.desktop {
 }
 
 compose {
-    //kotlinCompilerPlugin.set(libs.versions.compose.asProvider().get())
-    kotlinCompilerPlugin.set(libs.versions.compose.compiler.get())
+    kotlinCompilerPlugin.set(libs.versions.kotlin.compose.compiler.get())
     kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=${libs.versions.kotlin.asProvider().get()}")
 }

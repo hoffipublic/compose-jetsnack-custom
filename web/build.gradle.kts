@@ -1,5 +1,3 @@
-//import org.jetbrains.compose.compose
-//import org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootExtension
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
@@ -11,7 +9,8 @@ group = "com.example"
 version = "1.0-SNAPSHOT"
 
 kotlin {
-    wasm {
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmJs {
         moduleName = "jetsnackwasmapp"
         browser {
             commonWebpackConfig {
@@ -19,7 +18,6 @@ kotlin {
 //                    open = mapOf(
 //                        "app" to mapOf(
 //                            "name" to "google chrome canary",
-//                            "arguments" to listOf("--js-flags=--experimental-wasm-gc ")
 //                        )
 //                    ),
                     static = (devServer?.static ?: mutableListOf()).apply {
@@ -41,6 +39,8 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                api(compose.components.resources)
                 implementation(project(":common"))
             }
         }
@@ -57,7 +57,6 @@ compose.experimental {
 }
 
 compose {
-    //kotlinCompilerPlugin.set(libs.versions.compose.asProvider().get())
-    kotlinCompilerPlugin.set(libs.versions.compose.compiler.get())
+    kotlinCompilerPlugin.set(libs.versions.kotlin.compose.compiler.get())
     kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=${libs.versions.kotlin.asProvider().get()}")
 }

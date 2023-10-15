@@ -12,9 +12,6 @@ apache-poi = "5.2.3"
 arrow = "1.2.1"
 benasher44-uuid = "0.7.0"
 clikt = "4.2.0"
-# global https://github.com/JetBrains/compose-jb/releases or experimental: https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental/org/jetbrains/compose/desktop/desktop-jvm/
-compose = "1.5.1-dev-wasm01"
-compose-compiler = "1.5.1"
 exposed = "0.43.0"
 gradle-versions-catalogUpdate = "0.8.1"
 gradle-versions-filter = "0.1.16"
@@ -25,7 +22,7 @@ hamcrest = "2.2"
 jdkVersion = "17"
 jsoup = "1.16.1"
 junit-jupiter = "5.9.3"
-kermit = "2.0.1"
+kermit = "2.0.2"
 kodein = "7.20.1"
 koin = "3.5.0"
 kointest = "3.5.0"
@@ -34,7 +31,12 @@ kotest = "5.7.2"
 kotest-extensions-koin = "1.2.0"
 kotest-plugin = "0.4.10"
 # global
-kotlin = "1.9.10"
+kotlin = "1.9.10" # "1.9.20-RC"
+# global https://github.com/JetBrains/compose-jb/releases or experimental: https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental/org/jetbrains/compose/desktop/desktop-jvm/
+kotlin-compose = "1.5.1-dev-wasm01" # "1.5.2" # "1.5.2.1-Beta"
+kotlin-compose-wasm = "1.5.1-dev-wasm01"
+kotlin-compose-compiler = "1.5.1"
+kotlin-compose-kotlin-stdlib-wasm = "1.9.10" # "1.9.20-dev-6845" # bleeding edge https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/org/jetbrains/kotlin/kotlin-stdlib-wasm/
 kotlin-logging = "5.1.0"
 kotlinpoet = "1.14.2"
 kotlinx-coroutines = "1.7.3"
@@ -78,7 +80,7 @@ apache-poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "apache-
 arrow = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 benasher44-uuid = { module = "com.benasher44:uuid", version.ref = "benasher44-uuid" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
-compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "compose" }
+compose = { module = "org.jetbrains.compose:compose-gradle-plugin", version.ref = "kotlin-compose" }
 exposedCore = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
 exposedDatetime = { module = "org.jetbrains.exposed:exposed-kotlin-datetime", version.ref = "exposed" }
 exposedJdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }

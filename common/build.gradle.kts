@@ -11,7 +11,8 @@ kotlin {
         //withJava()
     }
     /* without WASM
-    wasm {
+    @OptIn(org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalWasmDsl::class)
+    wasmJs {
         browser()
     }
     */
@@ -21,8 +22,8 @@ kotlin {
                 api(compose.runtime)
                 api(compose.foundation)
                 api(compose.material)
-                implementation("co.touchlab:kermit:${libs.versions.kermit.v()}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${libs.versions.kotlinx.datetime.v()}")
+                implementation("co.touchlab:kermit:${libs.versions.kermit.v()}")
             }
         }
         val nonAndroidMain by creating {
@@ -42,7 +43,7 @@ kotlin {
         val desktopTest by getting
 
         /* without WASM
-        val wasmMain by getting {
+        val wasmJsMain by getting {
             dependsOn(nonAndroidMain)
         }
         */
@@ -57,7 +58,6 @@ compose.experimental {
 
 // if we wanna use special combinations of compose, kotlin and composeCompiler
 compose {
-    //kotlinCompilerPlugin.set(libs.versions.compose.asProvider().get())
-    kotlinCompilerPlugin.set(libs.versions.compose.compiler.get())
+    kotlinCompilerPlugin.set(libs.versions.kotlin.compose.compiler.get())
     kotlinCompilerPluginArgs.add("suppressKotlinVersionCompatibilityCheck=${libs.versions.kotlin.asProvider().get()}")
 }

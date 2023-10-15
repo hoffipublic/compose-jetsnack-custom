@@ -24,10 +24,12 @@ data class BorderLayout(
     enum class BORDER { TOP, RIGHT, BOTTOM, LEFT }
     enum class CORNER { TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT }
     data class StretchSize(val border: BORDER, val offset: Int, val stretch: Int)
-    val eventualTopSize: DpSize =    DpSize(0.dp, 0.dp)
-    val eventualRightSize: DpSize =  DpSize(0.dp, 0.dp)
-    val eventualBottomSize: DpSize = DpSize(0.dp, 0.dp)
-    val eventualLeftSize: DpSize =   DpSize(0.dp, 0.dp)
+    data class EventualSize(var size: DpSize, var padding: PaddingValues)
+    val eventualMainSize: EventualSize   = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
+    val eventualTopSize: EventualSize    = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
+    val eventualRightSize: EventualSize  = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
+    val eventualBottomSize: EventualSize = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
+    val eventualLeftSize: EventualSize   = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
 
     companion object {
         val NOCONTENT: @Composable (PaddingValues) -> Unit = {}
@@ -393,13 +395,13 @@ private fun BorderedContentLayout(
         val dummyPaddingValues = PaddingValues()
 
         var topPlaceables: List<Placeable> = emptyList()
-        var topWidth = 0;    var topHeight = 0;    var topOffset = 0
+        var topWidth = 0   ; var topHeight = 0   ; var topOffset = 0    ; var topPadding = dummyPaddingValues
         var bottomPlaceables: List<Placeable> = emptyList()
-        var bottomWidth = 0; var bottomHeight = 0; var bottomOffset = 0
+        var bottomWidth = 0; var bottomHeight = 0; var bottomOffset = 0 ; var bottomPadding = dummyPaddingValues
         var leftPlaceables: List<Placeable> = emptyList()
-        var leftWidth = 0;   var leftHeight = 0;   var leftOffset = 0
+        var leftWidth = 0  ; var leftHeight = 0  ; var leftOffset = 0   ; var leftPadding = dummyPaddingValues
         var rightPlaceables: List<Placeable> = emptyList()
-        var rightWidth = 0;  var rightHeight = 0;  var rightOffset = 0
+        var rightWidth = 0 ; var rightHeight = 0 ; var rightOffset = 0  ; var rightPadding = dummyPaddingValues
 
         for (stretchSize in borderLayout.measureOrder) {
             when (stretchSize.border) {
@@ -408,7 +410,9 @@ private fun BorderedContentLayout(
                         topPlaceables = subcompose(BorderLayout.BORDER.TOP) {
                             when (stretchSize.offset) {
                                 0 -> { topComposable(dummyPaddingValues) }
-                                1 -> { topComposable(PaddingValues(start = leftWidth.toDp())) ; topOffset = 1 }
+                                1 -> { topPadding = PaddingValues(start = leftWidth.toDp())  ; topOffset = 1
+                                    topComposable(topPadding)
+                                }
                                 else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                             }
                         }.map { it.measure(
@@ -432,7 +436,9 @@ private fun BorderedContentLayout(
                         bottomPlaceables = subcompose(BorderLayout.BORDER.BOTTOM) {
                             when (stretchSize.offset) {
                                 0 -> { bottomComposable(dummyPaddingValues) }
-                                1 -> { bottomComposable(PaddingValues(start = leftWidth.toDp())) ; bottomOffset = 1 }
+                                1 -> { bottomPadding = PaddingValues(start = leftWidth.toDp()) ; bottomOffset = 1
+                                    bottomComposable(bottomPadding)
+                                }
                                 else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                             }
                         }.map { it.measure(
@@ -456,7 +462,9 @@ private fun BorderedContentLayout(
                         leftPlaceables = subcompose(BorderLayout.BORDER.LEFT) {
                             when (stretchSize.offset) {
                                 0 -> { leftComposable(dummyPaddingValues) }
-                                1 -> { leftComposable(PaddingValues(top = topHeight.toDp())) ; leftOffset = 1 }
+                                1 -> { leftPadding = PaddingValues(top = topHeight.toDp()) ; leftOffset = 1
+                                    leftComposable(leftPadding)
+                                }
                                 else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                             }
                         }.map { it.measure(
@@ -480,7 +488,9 @@ private fun BorderedContentLayout(
                         rightPlaceables = subcompose(BorderLayout.BORDER.RIGHT) {
                             when (stretchSize.offset) {
                                 0 -> { rightComposable(dummyPaddingValues) }
-                                1 ->  { rightComposable(PaddingValues(topHeight.toDp())) ; rightOffset = 1 }
+                                1 ->  { rightPadding = PaddingValues(topHeight.toDp()) ; rightOffset = 1
+                                    rightComposable(rightPadding)
+                                }
                                 else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                             }
                         }.map { it.measure(
@@ -503,8 +513,9 @@ private fun BorderedContentLayout(
         }
 
         // mainContent measuring
+        val mainPadding = PaddingValues(start = leftWidth.toDp(), bottom = bottomHeight.toDp(), end = rightWidth.toDp())
         val mainContentPlaceables = subcompose(42) {
-            mainComposable(PaddingValues(start = leftWidth.toDp(), bottom = bottomHeight.toDp(), end = rightWidth.toDp()))
+            mainComposable(mainPadding)
         }.map { it.measure(
             constraints.copy(
                 maxHeight = (constraints.maxHeight - topHeight - bottomHeight).coerceAtLeast(0),
@@ -543,6 +554,17 @@ private fun BorderedContentLayout(
         if (assertErrorList.isNotEmpty()) {
             Logger.w("Warning: FramedContent asserts failed for: '${assertErrorList.joinToString()}'. (Do you have a Spacer() or .weight(1f) in it?")
         }
+
+        borderLayout.eventualMainSize.size = DpSize(mainContentWidth.toDp(), mainContentHeight.toDp())
+        borderLayout.eventualMainSize.padding = mainPadding
+        borderLayout.eventualTopSize.size = DpSize(topWidth.toDp(), topHeight.toDp())
+        borderLayout.eventualTopSize.padding = topPadding
+        borderLayout.eventualRightSize.size = DpSize(rightWidth.toDp(), rightHeight.toDp())
+        borderLayout.eventualRightSize.padding = rightPadding
+        borderLayout.eventualBottomSize.size = DpSize(bottomWidth.toDp(), bottomHeight.toDp())
+        borderLayout.eventualBottomSize.padding = bottomPadding
+        borderLayout.eventualLeftSize.size = DpSize(leftWidth.toDp(), leftHeight.toDp())
+        borderLayout.eventualLeftSize.padding = leftPadding
 
         layout(maxLayoutWidth, maxLayoutHeight) {
             mainContentPlaceables.forEach {

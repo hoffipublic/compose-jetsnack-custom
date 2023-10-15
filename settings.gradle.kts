@@ -24,7 +24,7 @@ dependencyResolutionManagement {
         google()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://maven.pkg.jetbrains.space/kotlin/p/wasm/experimental")
-        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/") // bleeding edge
+        maven("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/") // bleeding edge https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/org/jetbrains/kotlin/kotlin-stdlib-wasm/
         maven("https://androidx.dev/storage/compose-compiler/repository/") // bleeding edge
     }
     versionCatalogs {

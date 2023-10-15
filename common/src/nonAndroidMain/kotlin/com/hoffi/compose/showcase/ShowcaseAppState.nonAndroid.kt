@@ -3,6 +3,7 @@ package com.hoffi.compose.showcase
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import com.example.jetsnack.ui.NavigationStack
 import com.example.jetsnack.ui.home.HomeSections
 import kotlinx.coroutines.CoroutineScope
@@ -12,6 +13,8 @@ actual class MppShowcaseAppState(
     actual val scaffoldState: ScaffoldState,
     //actual val showcaseManager: ShowcaseManager,
     actual val coroutineScope: CoroutineScope,
+    actual val appWindowSize: MutableState<AppWindowSize>,
+    actual val appWindowTitle: MutableState<String>
 ) {
     actual val darkTheme: MutableState<Boolean> = mutableStateOf(true)
     actual val isDarkTheme: Boolean
@@ -42,16 +45,18 @@ actual class MppShowcaseAppState(
 
 actual val NULL_appState: MppShowcaseAppState = MppShowcaseAppState(
     ScaffoldState(DrawerState(DrawerValue.Closed, { true }), SnackbarHostState()),
-    CoroutineScope(EmptyCoroutineContext)
+    CoroutineScope(EmptyCoroutineContext),
+    mutableStateOf(AppWindowSize(Dp(-1f), Dp(-1f), Dp(-1f), Dp(-1f))),
+    mutableStateOf("<NULL>")
 )
 
 @Composable
-actual fun rememberMppShowcaseAppState(): MppShowcaseAppState {
+actual fun rememberMppShowcaseAppState(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: MutableState<String>): MppShowcaseAppState {
     val scaffoldState = rememberScaffoldState()
     //val showcaseManager = ShowcaseManager
     val coroutineScope = rememberCoroutineScope()
 
     return remember(scaffoldState, /* snackbarManager,*/ coroutineScope) {
-        MppShowcaseAppState(scaffoldState, /* showcaseManager,*/ coroutineScope)
+        MppShowcaseAppState(scaffoldState, /* showcaseManager,*/ coroutineScope, appWindowSize, appWindowTitle)
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.CoroutineScope
 
 /**
@@ -20,10 +21,12 @@ object MainDestinations {
 expect val NULL_appState: MppShowcaseAppState
 
 @Composable
-expect fun rememberMppShowcaseAppState(): MppShowcaseAppState
+expect fun rememberMppShowcaseAppState(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: MutableState<String>): MppShowcaseAppState
 
 @Stable
 expect class MppShowcaseAppState {
+    val appWindowSize: MutableState<AppWindowSize>
+    val appWindowTitle: MutableState<String>
     val scaffoldState: ScaffoldState
     //val showcaseManager: ShowcaseManager
     val coroutineScope: CoroutineScope
@@ -34,6 +37,9 @@ expect class MppShowcaseAppState {
     fun themeBasedAccentColor(): Color
     fun themeBasedAccentColorOpposite(): Color
 }
+
+data class AppWindowSize(val xPos: Dp, val yPos: Dp, val width: Dp, val height: Dp)
+
 
 ///**
 // * Responsible for holding state related to [ShowcaseApp] and containing UI-related logic.

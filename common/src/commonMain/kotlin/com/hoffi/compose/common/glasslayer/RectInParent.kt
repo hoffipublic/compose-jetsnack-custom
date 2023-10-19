@@ -1,8 +1,9 @@
-package com.hoffi.compose.showcase.glasslayer
+package com.hoffi.compose.common.glasslayer
 
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Rect
@@ -12,14 +13,17 @@ import com.hoffi.compose.common.isWidthFinite
 import com.hoffi.compose.common.pxToDp
 
 /**
+ * Represents a Rect (e.g. on an App `GlassLayer`) that is derived in Size, Offset and Constraints from an originRect (probably constraines of a BoxWithConstraints).
+ *
+ * As the originRect Size, Offset and therefore its Constraints might change.
+ *
  * a) holds the original `Rect`  (e.g. the parent component rectInWindow, which triggers e.g. a popup)
  * b) holds an actualSize `Rect` (e.g. the size of the popup after being rendered via modifier.onGloballyPositioned
  * c) can calculate a "derived" Rect from the original one via `sizedRect()`
  * d) holds "adjusted" `SizeConstraints` if `sizedRect()` dimensions have been altered (because of e.g. no more space in the window)
  * e) holds the eventualSizeConstraints for the rendered Component inside the adjusted SizeConstraints and obeying the actualRect size
  */
-@Immutable
-abstract class RectSize(val originRect: Rect) {
+abstract class RectSize(val originRect: MutableState<Rect>) {
     protected open val eventualSizeConstraints: SizeConstraints = SizeConstraints() // initially the sizedRect() but maybe adjusted after creation, e.g. if not enough space in window
     var actualRect: Rect = Rect.Zero.copy(right = Float.POSITIVE_INFINITY, bottom = Float.POSITIVE_INFINITY) // usually set in modifier.onGloballyPositioned of the e.g. Popup itself
         set(value) { field = value ; restrictSizeConstraintsToActualRect() }
@@ -42,9 +46,9 @@ abstract class RectSize(val originRect: Rect) {
     abstract fun restrictSizeConstraintsToActualRect()
     abstract fun sizedRect() : Rect
     override fun toString(): String = """
-         originRect : ${originRect} (size: ${originRect.size})
+         originRect : ${originRect.value} (size: ${originRect.value.size})
          sizedRect  : ${sizedRect()} (size: ${sizedRect().size})
-         eventual   : ${eventualSizeConstraints}"""
+         eventual   : $eventualSizeConstraints"""
 
     @Composable
     fun constrainToSizeConstraints(modifier: Modifier): Modifier = modifier.composed {
@@ -52,87 +56,87 @@ abstract class RectSize(val originRect: Rect) {
     }
 
     companion object {
-        val Zero = object : RectSize(Rect.Zero) {
+        val Zero = object : RectSize(mutableStateOf(Rect.Zero)) {
             override fun resetSizeConstraints() { }
             override fun restrictSizeConstraintsToActualRect() { }
-            override fun sizedRect(): Rect = originRect
+            override fun sizedRect(): Rect = originRect.value
         }
-        val Unspecified = object : RectSize(Rect.Zero) {
+        val Unspecified = object : RectSize(mutableStateOf(Rect.Zero)) {
             override fun resetSizeConstraints() { }
             override fun restrictSizeConstraintsToActualRect() { }
             override fun sizedRect(): Rect = throw Exception("UNSPECIFIED")
         }
-        val Infinite = object : RectSize(Rect.Zero.copy(right = Float.POSITIVE_INFINITY, bottom = Float.POSITIVE_INFINITY)) {
+        val Infinite = object : RectSize(mutableStateOf(Rect.Zero.copy(right = Float.POSITIVE_INFINITY, bottom = Float.POSITIVE_INFINITY))) {
             override fun resetSizeConstraints() { }
             override fun restrictSizeConstraintsToActualRect() { }
-            override fun sizedRect(): Rect = originRect
+            override fun sizedRect(): Rect = originRect.value
         }
     }
 
-    class ExactlyAs(rect: Rect) : RectSize(rect) {
+    class ExactlyAs(rect: MutableState<Rect>) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
         override fun restrictSizeConstraintsToActualRect() { }
-        override fun sizedRect(): Rect =         Rect(originRect.left, originRect.top, originRect.right, originRect.bottom)
+        override fun sizedRect(): Rect =         Rect(originRect.value.left, originRect.value.top, originRect.value.right, originRect.value.bottom)
     }
-    class ExactHeightInfWidthAs(rect: Rect) : RectSize(rect) {
+    class ExactHeightInfWidthAs(rect: MutableState<Rect>) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
-        override fun restrictSizeConstraintsToActualRect() { eventualSizeConstraints.maxWidth = eventualSizeConstraints.maxWidth.coerceAtMost(actualRect.width).coerceAtLeast(originRect.width) }
-        override fun sizedRect(): Rect =         Rect(originRect.left, originRect.top, Float.NEGATIVE_INFINITY, originRect.bottom)
+        override fun restrictSizeConstraintsToActualRect() { eventualSizeConstraints.maxWidth = eventualSizeConstraints.maxWidth.coerceAtMost(actualRect.width).coerceAtLeast(originRect.value.width) }
+        override fun sizedRect(): Rect =         Rect(originRect.value.left, originRect.value.top, Float.NEGATIVE_INFINITY, originRect.value.bottom)
     }
-    class ExactWidthInfHeightAs(rect: Rect) : RectSize(rect) {
+    class ExactWidthInfHeightAs(rect: MutableState<Rect>) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
-        override fun restrictSizeConstraintsToActualRect() { eventualSizeConstraints.maxHeight = eventualSizeConstraints.maxHeight.coerceAtMost(actualRect.height).coerceAtLeast(originRect.height) }
-        override fun sizedRect(): Rect =         Rect(originRect.left, originRect.top, originRect.right, Float.NEGATIVE_INFINITY)
+        override fun restrictSizeConstraintsToActualRect() { eventualSizeConstraints.maxHeight = eventualSizeConstraints.maxHeight.coerceAtMost(actualRect.height).coerceAtLeast(originRect.value.height) }
+        override fun sizedRect(): Rect =         Rect(originRect.value.left, originRect.value.top, originRect.value.right, Float.NEGATIVE_INFINITY)
     }
-    class ExactlyAsAdjusted(rect: Rect, val widthPlus: Float = 0f, val heightPlus: Float = 0f) : RectSize(rect) {
+    class ExactlyAsAdjusted(rect: MutableState<Rect>, val widthPlus: Float = 0f, val heightPlus: Float = 0f) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
         override fun restrictSizeConstraintsToActualRect() { resetSizeConstraints() }
-        override fun sizedRect(): Rect = Rect(left = originRect.left, top = originRect.top,
-            right = if (originRect.isWidthFinite()) originRect.right + widthPlus else originRect.right,
-            bottom = if (originRect.isHeightFinite()) originRect.bottom + heightPlus else originRect.bottom
+        override fun sizedRect(): Rect = Rect(left = originRect.value.left, top = originRect.value.top,
+            right = if (originRect.value.isWidthFinite()) originRect.value.right + widthPlus else originRect.value.right,
+            bottom = if (originRect.value.isHeightFinite()) originRect.value.bottom + heightPlus else originRect.value.bottom
         )
     }
-    class ExactlySizedAs(rect: Rect, var perCentWidth: Float, var perCentHeight: Float) : RectSize(rect) {
+    class ExactlySizedAs(rect: MutableState<Rect>, var perCentWidth: Float, var perCentHeight: Float) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
         override fun restrictSizeConstraintsToActualRect() { resetSizeConstraints() }
-        override fun sizedRect(): Rect = if (originRect.isInfinite) originRect else Rect(left = originRect.left, top = originRect.top,
-            right = if (originRect.isWidthFinite())  originRect.left + ((originRect.right  - originRect.left) * perCentWidth) else originRect.right,
-            bottom = if (originRect.isHeightFinite()) originRect.top  + ((originRect.bottom - originRect.top)  * perCentHeight) else originRect.bottom
+        override fun sizedRect(): Rect = if (originRect.value.isInfinite) originRect.value else Rect(left = originRect.value.left, top = originRect.value.top,
+            right = if (originRect.value.isWidthFinite())  originRect.value.left + ((originRect.value.right  - originRect.value.left) * perCentWidth) else originRect.value.right,
+            bottom = if (originRect.value.isHeightFinite()) originRect.value.top  + ((originRect.value.bottom - originRect.value.top)  * perCentHeight) else originRect.value.bottom
         )
     }
-    class ExactlySizedWithHeightAs(rect: Rect, var perCentWidth: Float, var heightPlus: Float = 0f) : RectSize(rect) {
+    class ExactlySizedWithHeightAs(rect: MutableState<Rect>, var perCentWidth: Float, var heightPlus: Float = 0f) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
         override fun restrictSizeConstraintsToActualRect() { resetSizeConstraints() }
-        override fun sizedRect(): Rect = Rect(left = originRect.left, top = originRect.top,
-            right = if (originRect.isWidthFinite()) originRect.left + ((originRect.right  - originRect.left) * perCentWidth) else originRect.right,
-            bottom = if (originRect.isHeightFinite()) originRect.bottom + heightPlus else originRect.bottom
+        override fun sizedRect(): Rect = Rect(left = originRect.value.left, top = originRect.value.top,
+            right = if (originRect.value.isWidthFinite()) originRect.value.left + ((originRect.value.right  - originRect.value.left) * perCentWidth) else originRect.value.right,
+            bottom = if (originRect.value.isHeightFinite()) originRect.value.bottom + heightPlus else originRect.value.bottom
         )
     }
-    class ExactlySizedWithWidthAs(rect: Rect, var widthPlus: Float = 0f, var perCentHeight: Float) : RectSize(rect) {
+    class ExactlySizedWithWidthAs(rect: MutableState<Rect>, var widthPlus: Float = 0f, var perCentHeight: Float) : RectSize(rect) {
         override var eventualSizeConstraints = sizedRect().createSizeConstraints()
         override fun resetSizeConstraints()  { sizedRect().createSizeConstraints() }
         override fun restrictSizeConstraintsToActualRect() { resetSizeConstraints() }
-        override fun sizedRect(): Rect = Rect(left = originRect.left, top = originRect.top,
-            right = if (originRect.isWidthFinite()) originRect.right  + widthPlus else originRect.right,
-            bottom = if (originRect.isHeightFinite()) originRect.top  + ((originRect.bottom - originRect.top)  * perCentHeight) else originRect.bottom
+        override fun sizedRect(): Rect = Rect(left = originRect.value.left, top = originRect.value.top,
+            right = if (originRect.value.isWidthFinite()) originRect.value.right  + widthPlus else originRect.value.right,
+            bottom = if (originRect.value.isHeightFinite()) originRect.value.top  + ((originRect.value.bottom - originRect.value.top)  * perCentHeight) else originRect.value.bottom
         )
     }
 
     /** used for AutoCompleteDropdowns ... TODO not sure about the other ones above! */
-    class WidthAsButHeightVariable(rect: Rect, var widthPlus: Float = 0f, var minHeight: Float = 0f, maxHeight: Float = Float.NEGATIVE_INFINITY) : RectSize(rect) {
+    class WidthAsButHeightVariable(rect: MutableState<Rect>, var widthPlus: Float = 0f, var minHeight: Float = 0f, maxHeight: Float = Float.NEGATIVE_INFINITY) : RectSize(rect) {
         override var eventualSizeConstraints =                           SizeConstraints(sizedRect().width + widthPlus, minHeight, maxWidth = sizedRect().width + widthPlus, maxHeight = maxHeight)
         override fun resetSizeConstraints()  { eventualSizeConstraints = SizeConstraints(sizedRect().width + widthPlus, minHeight, maxWidth = sizedRect().width + widthPlus, maxHeight = Float.POSITIVE_INFINITY) }
         override fun restrictSizeConstraintsToActualRect() { eventualSizeConstraints.maxHeight.coerceAtMost(actualRect.height) }
-        override fun sizedRect(): Rect = Rect(left = originRect.left, top = originRect.top,
-            right = if (originRect.isWidthFinite()) originRect.right + widthPlus else originRect.right,
+        override fun sizedRect(): Rect = Rect(left = originRect.value.left, top = originRect.value.top,
+            right = if (originRect.value.isWidthFinite()) originRect.value.right + widthPlus else originRect.value.right,
             // CAN  BE NULL(!!!) if called from override var eventualSizeConstraints above
-            bottom = eventualSizeConstraints?.maxHeight ?: Float.NEGATIVE_INFINITY
+            bottom = eventualSizeConstraints.maxHeight
         )
     }
 }

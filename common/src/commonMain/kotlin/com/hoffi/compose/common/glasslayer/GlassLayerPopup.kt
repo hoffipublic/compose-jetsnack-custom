@@ -1,8 +1,9 @@
-package com.hoffi.compose.showcase.glasslayer
+package com.hoffi.compose.common.glasslayer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
@@ -42,15 +43,15 @@ fun AppPopup(
     val popupClass = remember { PopupClass(name, popupPlacement, originInParent, offsetInParent, offsetPlacement, popupTooBig, content) }
     if (parentRectSize.value === RectSize.Zero) {
         // this Box will have the same global position as the Box of the Component containing this AppPopup
-        // but this way we cannot know the parents width and heigt which we'll simply set to zero
-        Box(Modifier.onGloballyPositioned { popupClass.rectSize = mutableStateOf(RectSize.ExactlyAs(Rect(it.positionInWindow(), Size.Zero))) })
+        // but this way we cannot know the parents width and height which we'll simply set to zero
+        Box(Modifier.onGloballyPositioned { popupClass.rectSize = mutableStateOf(RectSize.ExactlyAs(mutableStateOf(Rect(it.positionInWindow(), Size.Zero)))) })
     } else {
         popupClass.rectSize = parentRectSize // in the caller get this by Modifier.onGloballyPositioned { componentRect = it.rectInWindow() }
     }
     DisposableEffect(popupClass) {
-        glassPane.panePopups.add(popupClass)
+        glassPane.addPopup(popupClass)
         onDispose {
-            glassPane.panePopups.remove(popupClass)
+            glassPane.removePopup(popupClass)
             //sizePopup.value = SizePopup()
         }
     }
@@ -60,29 +61,26 @@ fun AppPopup(
  * encapsulates the composable popup content
  */
 class PopupClass(
-    val name: String,
+    id: Any,
     val popupPlacement: PopupPlacement = PopupPlacement.VARIABLE,
     val originInParent: OriginInParent = OriginInParent.BOTTOMLEFT,
     val offsetInParent: State<Rect> = mutableStateOf(Rect.Zero), // State, because if offset is changed dynamically when created by `derivedStateOf`
     val offsetPlacement: OriginInParent = OriginInParent.BOTTOMLEFT,
     val popupTooBig: PopupTooBig = PopupTooBig.COERCE_MAX_OFFSET,
-    val content: @Composable () -> Unit
-) {
-    var rectSize: MutableState<RectSize> = mutableStateOf(RectSize.Zero)
-
+    content: @Composable () -> Unit
+) : AGlassLayerComposableClass(id, mutableStateOf(RectSize.Zero), content)  {
     companion object {
         val POPUP_MIN_SIZE = IntSize(width  = 300, height = 250)
     }
 
-    @Composable
-    fun PopupContent() {
-        if (rectSize.value.originRect !== Rect.Zero) { // sentinel if initialized already
+    @Composable override fun ComposableContent() {
+        if (rectSize.value.originRect.value !== Rect.Zero) { // sentinel if initialized already
 
             val totalOffset = when(originInParent) {
-                OriginInParent.TOPLEFT ->     rectSize.value.originRect.topLeft
-                OriginInParent.TOPRIGHT ->    rectSize.value.originRect.topRight
-                OriginInParent.BOTTOMLEFT ->  rectSize.value.originRect.bottomLeft
-                OriginInParent.BOTTOMRIGHT -> rectSize.value.originRect.bottomRight
+                OriginInParent.TOPLEFT ->     rectSize.value.originRect.value.topLeft
+                OriginInParent.TOPRIGHT ->    rectSize.value.originRect.value.topRight
+                OriginInParent.BOTTOMLEFT ->  rectSize.value.originRect.value.bottomLeft
+                OriginInParent.BOTTOMRIGHT -> rectSize.value.originRect.value.bottomRight
             } + when (offsetPlacement) {
                 OriginInParent.TOPLEFT ->     offsetInParent.value.topLeft
                 OriginInParent.TOPRIGHT ->    offsetInParent.value.topRight

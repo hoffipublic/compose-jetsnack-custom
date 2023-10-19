@@ -7,9 +7,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
 import androidx.compose.material.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -19,9 +19,12 @@ import co.touchlab.kermit.Logger
 import com.example.jetsnack.ui.components.JetsnackSnackbar
 import com.example.jetsnack.ui.snackdetail.jetSnackSystemBarsPadding
 import com.hoffi.compose.common.component.ExampleContentHorizontal
+import com.hoffi.compose.common.component.BoxWithTextInCorners
+import com.hoffi.compose.common.component.ScrollColumn
+import com.hoffi.compose.common.glasslayer.GlassLayerSheetClass
 import com.hoffi.compose.common.layout.*
 import com.hoffi.compose.common.theme.HoffiMaterialTheme
-import com.hoffi.compose.showcase.glasslayer.GlassLayers
+import com.hoffi.compose.common.glasslayer.GlassLayers
 import kotlinx.datetime.Clock
 
 val globalCompositionLocalString = compositionLocalOf<String> { error("appState of ShowcaseApp() not set at top level") } // intId to String
@@ -86,7 +89,7 @@ fun ShowcaseApp(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: Muta
                     }
                 ) { scaffoldPaddingValues ->
                     //ShowcaseScaffoldContent(innerPaddingModifier, appState)
-                    Logger.i { "This is a log ${Clock.System.now()}" }
+                    Logger.i { "This is a log in Scaffold ${Clock.System.now()}" }
                     Column(modifier = Modifier.fillMaxSize().border(width = 2.dp, color = Color.DarkGray).padding(5.dp)) {
                         Row(
                             horizontalArrangement = Arrangement.Center,
@@ -100,13 +103,13 @@ fun ShowcaseApp(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: Muta
                                     .onClick { appState.toggleTheme() },
                                 style = TextStyle(fontWeight = FontWeight.W900, color = Color(0xFF4552B8))
                             )
-                        }
+                        } // Row
                         // val borderLayout = BorderLayout.TOPBOTTOMSTRETCHED, //LEFTRIGHTSTRETCHED,
                         val borderLayout = BorderLayout(
-                            topleft = BorderLayout.BORDER.LEFT,
-                            topright = BorderLayout.BORDER.TOP,
-                            bottomleft = BorderLayout.BORDER.LEFT,
-                            bottomright = BorderLayout.BORDER.RIGHT,
+                            topleft = BORDER.LEFT,
+                            topright = BORDER.TOP,
+                            bottomleft = BORDER.LEFT,
+                            bottomright = BORDER.RIGHT,
                         )
                         BorderedContent(
                             Modifier.border(1.dp, Color.Red),
@@ -141,11 +144,10 @@ fun ShowcaseApp(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: Muta
                                 }
                             },
                         ) { borderedContentPaddingValues ->
-                            var showSheetSmall by rememberSaveable { mutableStateOf(false) }
-                            var showSheetLarge by rememberSaveable { mutableStateOf(true) }
-                            var showBottomSheet by rememberSaveable { mutableStateOf(false) }
 
-                            Box(modifier = Modifier.fillMaxSize().border(2.dp, Color.Green), contentAlignment = Alignment.Center) {
+                            val boxBorderDp = 2.dp
+
+                            Box(modifier = Modifier.fillMaxSize().border(boxBorderDp, Color.Green), contentAlignment = Alignment.Center) {
                                 Surface() {
                                     Text("CENTER", textAlign = TextAlign.Center)
                                 }
@@ -154,58 +156,47 @@ fun ShowcaseApp(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: Muta
                                     //ExampleContentVerticalSimple(40, Modifier.align(Alignment.TopStart))
                                     ExampleContentHorizontal(40)
 
-                                    SwipableBorders(BorderLayout.BORDER.BOTTOM) { //Modifier.fillMaxSize()) {
+                                    //Box(Modifier.size(50.dp, 50.dp).background(Color.Green).clipToBounds()) {
+                                    //    Box(Modifier.size(50.dp, 50.dp).offset(10.dp, 10.dp).background(Color.DarkGray)) {
+                                    //        Text("Text")
+                                    //    }
+                                    //}
+                                    Column(Modifier.height(100.dp)) {
+                                        Box(Modifier.size(30.dp, 10.dp).background(Color.Black))
+                                        Box(Modifier.fillMaxWidth().weight(1f).background(Color.Blue)) // yellow box OK
+                                        //Box(Modifier.fillMaxSize().background(Color.Blue))           // no yellow box visible with THIS line
+                                        Box(Modifier.size(30.dp, 10.dp).background(Color.Yellow))
+                                    }
+
+                                    val partialSwipe = 0.25f
+                                    SwipeableBorders(Modifier.fillMaxSize().padding(PaddingValues(boxBorderDp, boxBorderDp, boxBorderDp, boxBorderDp)), partiallyExpandedAt = partialSwipe,
+                                        topSheetContent = GlassLayerSheetClass(BORDER.TOP, "hardcoded SwipeableBorders topSheet") {
+                                            //BoxWithTextInCorners("TopSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↑ topSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            BoxWithTextInCorners("TopSwipeable ", Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↑ topSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //Box(Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) {}
+                                            //Box(Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("topSheetContent", Modifier.offset(50.dp, 50.dp)) }
+                                        },
+                                        bottomSheetContent = GlassLayerSheetClass(BORDER.BOTTOM, "hardcoded SwipeableBorders bottomSheet") {
+                                            //BoxWithTextInCorners("BottomSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //BoxWithTextInCorners("BottomSwipeable ", Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //Box(Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) {}
+                                            //Box(Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) {}
+                                            ScrollColumn {
+                                                BoxWithTextInCorners("BottomSwipeable ", Modifier.height(1000.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            }
+                                        }
+                                    ) {
                                         Box(
                                             Modifier.fillMaxSize().background(MaterialTheme.colors.surface),
                                             contentAlignment = Alignment.BottomStart
                                         ) {
-                                            Text("Surface of SwipableBorders")
+                                            Text("Surface of SwipeableBorders")
                                         }
                                     }
-                                    ////if (showBottomSheet) {
-                                    //    @OptIn(ExperimentalMaterialApi::class)
-                                    //    BottomSheetSwipeable(
-                                    //        onPopupDismissRequest = { showBottomSheet = false },
-                                    //        borderLayout.eventualMainSize.padding, // TODO at this point borderLayout only has its initial values
-                                    //        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                                    //        initialSheetPosition = SheetPosition.PARTIALLY_EXPANDED
-                                    //    ) {
-                                    //        ExampleContentVerticalSimple(items = 70)
-                                    //    }
-                                    ////}
-
-                                    //@OptIn(ExperimentalMaterialApi::class)
-                                    //FullHeightBottomSheet(
-                                    //    header = { Surface() { Text("HEADER", textAlign = TextAlign.Center) } }
-                                    //) {
-                                    //    ExampleContentVertical(20)
-                                    //}
-
-
-                                    //if (showSheetSmall) {
-                                    //    @OptIn(ExperimentalMaterialApi::class)
-                                    //    ModalBottomSheet(
-                                    //        onDismissRequest = { showSheetSmall = false },
-                                    //        sheetState = rememberSheetState(),
-                                    //        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                                    //    ) {
-                                    //        ExampleColumnContent(items = 6)
-                                    //    }
-                                    //}
-                                    //if (showSheetLarge) {
-                                    //    @OptIn(ExperimentalMaterialApi::class)
-                                    //    ModalBottomSheet(
-                                    //        onDismissRequest = { showSheetLarge = false },
-                                    //        sheetState = rememberSheetState(),
-                                    //        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                                    //    ) {
-                                    //        ExampleColumnContent(items = 101)
-                                    //    }
-                                    //}
-                                } // Column
+                                } // Column inner
                             } // Box
                         } // BorderedContent
-                    } // Column
+                    } // Column of main Scaffold
                 } // Scaffold
             } // AppWithGlassLayers
         } // HoffiMaterialTheme

@@ -1,7 +1,13 @@
-package com.hoffi.compose.showcase.glasslayer
+package com.hoffi.compose.common.glasslayer
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.SwipeableState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import com.hoffi.compose.common.layout.SheetPosition
 
 interface VisibleWithShowHideIfc {
     var visible: Boolean
@@ -10,9 +16,26 @@ interface VisibleWithShowHideIfc {
     fun isVisible() : Boolean
 }
 
+@OptIn(ExperimentalMaterialApi::class)
+abstract class AGlassLayerComposableClass(
+    val id: Any,
+    var rectSize: MutableState<RectSize>,
+    val content: @Composable () -> Unit
+) {
+    //companion object { val NOCONTENT = GlassLayerNOCONTENT }
+    @Composable abstract fun ComposableContent()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is AGlassLayerComposableClass) return false
+        if (id != other.id) return false
+        return true
+    }
+    override fun hashCode() = id.hashCode()
+}
+//object GlassLayerNOCONTENT : AGlassLayerComposableClass("<NOCONTENT>", mutableStateOf(RectSize.Zero), com.hoffi.compose.common.NOCONTENT) { @Composable override fun ComposableContent() {} }
 
 object GlassLayers {
-
     // =======================
     // GlassLayers' methods ...
     // =======================
@@ -36,6 +59,7 @@ object GlassLayers {
 
     val glassPaneLayers = listOf(
         editGlassPane,
+        sheetGlassPane,
         navigationGlassPane,
         dialogGlassPane,
         hintGlassPane,
@@ -50,10 +74,11 @@ object GlassLayers {
      *
      * Each GlassPane has its own popups, drawn on top of the stuff of its layer. */
     abstract class GlassPane(val panePopupCardinality: PanePopupCardinality) {
-        val paneComposables = mutableStateListOf<ComposableClass>()
+        protected val paneComposables = mutableStateListOf<AGlassLayerComposableClass>()
         val allPaneComposableStates = mutableListOf<VisibleWithShowHideIfc>()
-        val panePopups = mutableStateListOf<PopupClass>()
+        protected val panePopups = mutableStateListOf<PopupClass>()
         val allPanePopupStates = mutableListOf<VisibleWithShowHideIfc>()
+
         /** when PanePopupCardinality is SinglePopup, hide all visible Popups of its GlassPane on showing a new Popup */
         fun cardinality() {
             when (panePopupCardinality) {
@@ -61,6 +86,12 @@ object GlassLayers {
                 PanePopupCardinality.MultiplePopups -> {}
             }
         }
+
+        fun addComposable(glassLayerComposableClass: AGlassLayerComposableClass) = paneComposables.add(glassLayerComposableClass)
+        fun removeComposable(glassLayerComposableClass: AGlassLayerComposableClass) = paneComposables.remove(glassLayerComposableClass)
+        fun isVisible(id: Any) = paneComposables.any { it.id == id }
+        fun addPopup(popupClass: PopupClass) = panePopups.add(popupClass)
+        fun removePopup(popupClass: PopupClass) = panePopups.remove(popupClass)
 
         @Composable
         open fun glassLayerContent() {
@@ -71,7 +102,7 @@ object GlassLayers {
         @Composable
         open fun glassLayerPopupContent() {
             for (popup in panePopups) {
-                popup.PopupContent()
+                popup.ComposableContent()
             }
         }
     }

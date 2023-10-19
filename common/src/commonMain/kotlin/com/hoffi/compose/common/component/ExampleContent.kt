@@ -2,16 +2,20 @@ package com.hoffi.compose.common.component
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -126,5 +130,36 @@ fun ExampleContentHorizontal(items: Int, modifier: Modifier = Modifier) {
             repeat(times = items) { Text("Example item${it + 1}") }
         }
         HorizontalScrollbar(horizontalScrollState)
+    }
+}
+// .weight(1f, fill = false)
+@Composable
+fun BoxWithTextInCorners(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(modifier) {
+        Text(" $text TOPLEFT ",     Modifier.align(Alignment.TopStart)    .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text TOP ",         Modifier.align(Alignment.TopCenter)   .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text TOPRIGHT ",    Modifier.align(Alignment.TopEnd)      .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text LEFT ",        Modifier.align(Alignment.CenterStart) .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text CENTER ",      Modifier.align(Alignment.Center)      .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text RIGHT ",       Modifier.align(Alignment.CenterEnd)   .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text BOTTOMLEFT ",  Modifier.align(Alignment.BottomStart) .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text BOTTOM ",      Modifier.align(Alignment.BottomCenter).alpha(0.6f), overflow = TextOverflow.Ellipsis)
+        Text(" $text BOTTOMRIGHT ", Modifier.align(Alignment.BottomEnd)   .alpha(0.6f), overflow = TextOverflow.Ellipsis)
+//        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Top) {
+//            Text(" $text TOPLEFT " , textAlign = TextAlign.Start, modifier = Modifier.weight(1f).wrapContentHeight(Alignment.Top))
+//            Text(" $text TOP "     , textAlign = TextAlign.Center, modifier = Modifier.weight(1f).wrapContentHeight())
+//            Text(" $text TOPRIGHT ", textAlign = TextAlign.End, modifier = Modifier.weight(1f).wrapContentHeight(Alignment.Bottom))
+//        }
+//        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+//            Text(" $text LEFT " , textAlign = TextAlign.Start, modifier = Modifier.weight(1f).wrapContentHeight(Alignment.Top))
+//            Text(" $text CENTER "     , textAlign = TextAlign.Center, modifier = Modifier.weight(1f).wrapContentHeight())
+//            Text(" $text RIGHT ", textAlign = TextAlign.End, modifier = Modifier.weight(1f).wrapContentHeight(Alignment.Bottom))
+//        }
+//        Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.Bottom) {
+//            Text(" $text BOTTOMLEFT " , textAlign = TextAlign.Start, modifier = Modifier.weight(1f).wrapContentHeight(Alignment.Top))
+//            Text(" $text BOTTOM "     , textAlign = TextAlign.Center, modifier = Modifier.weight(1f).wrapContentHeight())
+//            Text(" $text BOTTOMRIGHT ", textAlign = TextAlign.End, modifier = Modifier.weight(1f).wrapContentHeight(Alignment.Bottom))
+//        }
+        content()
     }
 }

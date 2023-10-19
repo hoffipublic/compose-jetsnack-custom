@@ -13,6 +13,10 @@ import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.unit.*
 import co.touchlab.kermit.Logger
+import com.hoffi.compose.common.NOCONTENT
+import com.hoffi.compose.common.NOCONTENTwithPadding
+
+enum class BORDER { TOP, RIGHT, BOTTOM, LEFT }
 
 data class BorderLayout(
     val topleft: BORDER = BORDER.TOP,
@@ -21,8 +25,6 @@ data class BorderLayout(
     val bottomright: BORDER = BORDER.BOTTOM,
     val leftGuide: Float = 0.2f, val rightGuide: Float = 0.2f, val topGuide: Float = 0.2f, val bottomGuide: Float = 0.2f
 ) {
-    enum class BORDER { TOP, RIGHT, BOTTOM, LEFT }
-    enum class CORNER { TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT }
     data class StretchSize(val border: BORDER, val offset: Int, val stretch: Int)
     data class EventualSize(var size: DpSize, var padding: PaddingValues)
     val eventualMainSize: EventualSize   = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
@@ -32,7 +34,6 @@ data class BorderLayout(
     val eventualLeftSize: EventualSize   = EventualSize(DpSize(0.dp, 0.dp), PaddingValues())
 
     companion object {
-        val NOCONTENT: @Composable (PaddingValues) -> Unit = {}
         val TOPBOTTOMSTRETCHED = BorderLayout()
         val LEFTRIGHTSTRETCHED = BorderLayout(
             topleft = BORDER.LEFT,
@@ -335,10 +336,10 @@ fun BorderedContent(
     modifier: Modifier = Modifier,
     borderLayout: BorderLayout = BorderLayout(),
     paddingValues: PaddingValues = PaddingValues(),
-    topComposable: @Composable (PaddingValues) -> Unit = BorderLayout.NOCONTENT,
-    bottomComposable: @Composable (PaddingValues) -> Unit = BorderLayout.NOCONTENT,
-    leftComposable: @Composable (PaddingValues) -> Unit = BorderLayout.NOCONTENT,
-    rightComposable: @Composable (PaddingValues) -> Unit = BorderLayout.NOCONTENT,
+    topComposable: @Composable (PaddingValues) -> Unit = NOCONTENTwithPadding,
+    bottomComposable: @Composable (PaddingValues) -> Unit = NOCONTENTwithPadding,
+    leftComposable: @Composable (PaddingValues) -> Unit = NOCONTENTwithPadding,
+    rightComposable: @Composable (PaddingValues) -> Unit = NOCONTENTwithPadding,
     mainComposable: @Composable (PaddingValues) -> Unit
 ) {
     val child = @Composable { childModifier: Modifier ->
@@ -370,8 +371,8 @@ private fun BorderedContentLayout(
     SubcomposeLayout { layoutConstraints ->
         // the Composable this is in might have PaddingValues (e.g. because of the BottomBar of Scaffold), we have to consider these...
         val constraints: Constraints = layoutConstraints.copy(
-            maxWidth = layoutConstraints.maxWidth - paddingValues.calculateLeftPadding(LayoutDirection.Ltr).roundToPx() - paddingValues.calculateEndPadding(LayoutDirection.Ltr).roundToPx(),
-            maxHeight = layoutConstraints.maxHeight - paddingValues.calculateTopPadding().roundToPx() - paddingValues.calculateBottomPadding().roundToPx()
+            maxWidth = (layoutConstraints.maxWidth - paddingValues.calculateLeftPadding(LayoutDirection.Ltr).roundToPx() - paddingValues.calculateEndPadding(LayoutDirection.Ltr).roundToPx()).coerceAtLeast(layoutConstraints.minWidth),
+            maxHeight = (layoutConstraints.maxHeight - paddingValues.calculateTopPadding().roundToPx() - paddingValues.calculateBottomPadding().roundToPx()).coerceAtLeast(layoutConstraints.minHeight)
         )
 
         // ==========================================================================================================+
@@ -405,9 +406,9 @@ private fun BorderedContentLayout(
 
         for (stretchSize in borderLayout.measureOrder) {
             when (stretchSize.border) {
-                BorderLayout.BORDER.TOP -> {
-                    if (topComposable != BorderLayout.NOCONTENT) {
-                        topPlaceables = subcompose(BorderLayout.BORDER.TOP) {
+                BORDER.TOP -> {
+                    if (topComposable != NOCONTENT) {
+                        topPlaceables = subcompose(BORDER.TOP) {
                             when (stretchSize.offset) {
                                 0 -> { topComposable(dummyPaddingValues) }
                                 1 -> { topPadding = PaddingValues(start = leftWidth.toDp())  ; topOffset = 1
@@ -417,10 +418,10 @@ private fun BorderedContentLayout(
                             }
                         }.map { it.measure(
                             when (stretchSize.stretch) {
-                                1 -> constraints.copy(maxWidth = constraints.maxWidth - leftWidth - rightWidth)
+                                1 -> constraints.copy(maxWidth = (constraints.maxWidth - leftWidth - rightWidth).coerceAtLeast(constraints.minWidth))
                                 2 -> when (stretchSize.offset) {
-                                    0 -> constraints.copy(maxWidth = constraints.maxWidth - rightWidth)
-                                    1 -> constraints.copy(maxWidth = constraints.maxWidth - leftWidth)
+                                    0 -> constraints.copy(maxWidth = (constraints.maxWidth - rightWidth).coerceAtLeast(constraints.minWidth))
+                                    1 -> constraints.copy(maxWidth = (constraints.maxWidth - leftWidth).coerceAtLeast(constraints.minWidth))
                                     else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                                 }
                                 3 -> constraints
@@ -431,9 +432,9 @@ private fun BorderedContentLayout(
                         topHeight = topPlaceables.maxByOrNull { it.height }?.height ?: 0
                     }
                 }
-                BorderLayout.BORDER.BOTTOM -> {
-                    if (bottomComposable != BorderLayout.NOCONTENT) {
-                        bottomPlaceables = subcompose(BorderLayout.BORDER.BOTTOM) {
+                BORDER.BOTTOM -> {
+                    if (bottomComposable != NOCONTENT) {
+                        bottomPlaceables = subcompose(BORDER.BOTTOM) {
                             when (stretchSize.offset) {
                                 0 -> { bottomComposable(dummyPaddingValues) }
                                 1 -> { bottomPadding = PaddingValues(start = leftWidth.toDp()) ; bottomOffset = 1
@@ -443,10 +444,10 @@ private fun BorderedContentLayout(
                             }
                         }.map { it.measure(
                             when (stretchSize.stretch) {
-                                1 -> constraints.copy(maxWidth = constraints.maxWidth - leftWidth - rightWidth)
+                                1 -> constraints.copy(maxWidth = (constraints.maxWidth - leftWidth - rightWidth).coerceAtLeast(constraints.minWidth))
                                 2 -> when (stretchSize.offset) {
-                                    0 -> constraints.copy(maxWidth = constraints.maxWidth - rightWidth)
-                                    1 -> constraints.copy(maxWidth = constraints.maxWidth - leftWidth)
+                                    0 -> constraints.copy(maxWidth = (constraints.maxWidth - rightWidth).coerceAtLeast(constraints.minWidth))
+                                    1 -> constraints.copy(maxWidth = (constraints.maxWidth - leftWidth).coerceAtLeast(constraints.minWidth))
                                     else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                                 }
                                 3 -> constraints
@@ -457,9 +458,9 @@ private fun BorderedContentLayout(
                         bottomHeight = bottomPlaceables.maxByOrNull { it.height }?.height ?: 0
                     }
                 }
-                BorderLayout.BORDER.LEFT -> {
-                    if (leftComposable != BorderLayout.NOCONTENT) {
-                        leftPlaceables = subcompose(BorderLayout.BORDER.LEFT) {
+                BORDER.LEFT -> {
+                    if (leftComposable != NOCONTENT) {
+                        leftPlaceables = subcompose(BORDER.LEFT) {
                             when (stretchSize.offset) {
                                 0 -> { leftComposable(dummyPaddingValues) }
                                 1 -> { leftPadding = PaddingValues(top = topHeight.toDp()) ; leftOffset = 1
@@ -469,10 +470,10 @@ private fun BorderedContentLayout(
                             }
                         }.map { it.measure(
                             when (stretchSize.stretch) {
-                                1 -> constraints.copy(maxHeight = constraints.maxHeight - topHeight - bottomHeight)
+                                1 -> constraints.copy(maxHeight = (constraints.maxHeight - topHeight - bottomHeight).coerceAtLeast(constraints.minHeight))
                                 2 -> when (stretchSize.offset) {
-                                    0 -> constraints.copy(maxHeight = constraints.maxHeight - bottomHeight)
-                                    1 -> constraints.copy(maxHeight = constraints.maxHeight - topHeight)
+                                    0 -> constraints.copy(maxHeight = (constraints.maxHeight - bottomHeight).coerceAtLeast(constraints.minHeight))
+                                    1 -> constraints.copy(maxHeight = (constraints.maxHeight - topHeight).coerceAtLeast(constraints.minHeight))
                                     else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                                 }
                                 3 -> constraints
@@ -483,9 +484,9 @@ private fun BorderedContentLayout(
                         leftHeight = leftPlaceables.maxByOrNull { it.height }?.height ?: 0
                     }
                 }
-                BorderLayout.BORDER.RIGHT -> {
-                    if (rightComposable != BorderLayout.NOCONTENT) {
-                        rightPlaceables = subcompose(BorderLayout.BORDER.RIGHT) {
+                BORDER.RIGHT -> {
+                    if (rightComposable != NOCONTENT) {
+                        rightPlaceables = subcompose(BORDER.RIGHT) {
                             when (stretchSize.offset) {
                                 0 -> { rightComposable(dummyPaddingValues) }
                                 1 ->  { rightPadding = PaddingValues(topHeight.toDp()) ; rightOffset = 1
@@ -495,10 +496,10 @@ private fun BorderedContentLayout(
                             }
                         }.map { it.measure(
                             when (stretchSize.stretch) {
-                                1 -> constraints.copy(maxHeight = constraints.maxHeight - topHeight - bottomHeight)
+                                1 -> constraints.copy(maxHeight = (constraints.maxHeight - topHeight - bottomHeight).coerceAtLeast(constraints.minHeight))
                                 2 -> when (stretchSize.offset) {
-                                    0 -> constraints.copy(maxHeight = constraints.maxHeight - bottomHeight)
-                                    1 -> constraints.copy(maxHeight = constraints.maxHeight - topHeight)
+                                    0 -> constraints.copy(maxHeight = (constraints.maxHeight - bottomHeight).coerceAtLeast(constraints.minHeight))
+                                    1 -> constraints.copy(maxHeight = (constraints.maxHeight - topHeight).coerceAtLeast(constraints.minHeight))
                                     else -> throw Exception("Illegal BorderLayout.StretchSize.offset: ${stretchSize.offset}")
                                 }
                                 3 -> constraints

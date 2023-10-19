@@ -13,7 +13,7 @@ import com.accorddesk.frontend.ui.theme.themeBasedAccentColorOpposite
 fun BoxScope.VerticalScrollbar(verticalScrollState: ScrollState, modifier: Modifier = Modifier) {
     androidx.compose.foundation.VerticalScrollbar(
         adapter = rememberScrollbarAdapter(verticalScrollState),
-        modifier = Modifier.align(Alignment.CenterEnd),
+        modifier = modifier.align(Alignment.CenterEnd),
         style = LocalScrollbarStyle.current.copy(
             unhoverColor = themeBasedAccentColorOpposite().copy(alpha = 0.25f),
             hoverColor = themeBasedAccentColorOpposite().copy(alpha = 0.62f)

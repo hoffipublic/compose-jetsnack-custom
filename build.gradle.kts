@@ -13,7 +13,7 @@ allprojects {
             if (isComposeGroup && !isComposeCompiler && !isWasm && !isJs) {
                 val composeVersion = libs.versions.kotlin.compose.asProvider().get()
                 dependencyResolveDetails.useVersion(composeVersion)
-println("allprojects prj:%-12s: %-10s -> %-35s : %-28s (conf: %-52s)".format("'${project.name}'", composeVersion, "'${requested.module.group}", "${requested.module.name}'", conf.name))
+println("allprojects prj:%-12s: %-10s -> %-35s : %-28s (conf: %-52s".format("'${project.name}'", composeVersion, "'${requested.module.group}", "${requested.module.name}'", "${conf.name})"))
             }
             if (requested.module.name.startsWith("kotlin-stdlib")) {
                 //val kotlinVersion = libs.versions.kotlin.compose.kotlin.stdlib.wasm.get()

@@ -1,27 +1,20 @@
 package com.hoffi.compose.common.glasslayer
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.SwipeableDefaults
 import androidx.compose.material.SwipeableState
-import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.*
-import com.hoffi.compose.common.dpToPx
-import com.hoffi.compose.common.formatted
 import com.hoffi.compose.common.layout.BORDER
 import com.hoffi.compose.common.layout.SheetPosition
 import com.hoffi.compose.common.layout.triangledDrawerHorizontalCanvas
-import com.hoffi.compose.common.pxToDp
+import com.hoffi.compose.common.layout.triangledDrawerVerticalCanvas
 import com.hoffi.compose.common.toDpRect
 import kotlin.math.absoluteValue
 
@@ -74,85 +67,128 @@ class GlassLayerSheetClass(
     companion object { val NOCONTENT = GlassLayerSheetClass(BORDER.TOP, "<GlassLayerSheetClass NOCONTENT>", SwipeableState(initialValue = SheetPosition.HIDDEN, animationSpec = SwipeableDefaults.AnimationSpec, confirmStateChange = { true }), 0.dp, mutableStateOf(mapOf(0f to SheetPosition.HIDDEN)), com.hoffi.compose.common.NOCONTENT) }
     @Composable
     override fun ComposableContent() {
-        val sizedRect: DpRect = rectSize.value.sizedRect().toDpRect()
+        val sizedRect: IntRect = rectSize.value.sizedRect().roundToIntRect()
+        val sizedRectDp: DpRect = sizedRect.toDpRect()
         val sheetContentSize: MutableState<IntSize> = remember { mutableStateOf(IntSize.Zero) }
-        if (border == BORDER.BOTTOM) {
-                Box(Modifier
-                        .offset(sizedRect.left, sizedRect.top)
-                        .size(sizedRect.width, sizedRect.height) // TODO necessary?
-                        .clipToBounds() // clip anything inside this Box to the size of this Box (might be worth commenting out for debugging)
-//                    contentAlignment = Alignment.BottomStart
-                ) {
-                    Box(modifier = Modifier // swipe animation via offset
-                        // if pulling up/left swipeableState.offset is negative
-                        .let {
-                            if (sheetContentSize.value != IntSize.Zero)
-                                it.offset(x = 0.dp, ( +1f * sheetContentSize.value.height + swipeableState.offset.value).pxToDp())
-                            else it.offset(x = 0.dp, y = sizedRect.height) /* prevent flashing on first rendering where sheetContentSize is yet unknown */
-                        }
-                    ) {
-                        Column(Modifier
-                            .onGloballyPositioned { layoutCoordinates ->
-                                // if the size of the swipeable sheet content is _smaller_ than the main size content of SwipeableBorders
-                                // we can only know this AFTER first rendering was completed, because of "only once" measuring of jetpack compose
-//println("swiped ${"%-6s".format("BOTTOM")} at ${"%-19s".format(swipeableState.currentValue.toString())}: ${swipeableState.offset.value.formatted()} contSize(${sheetContentSize.value.formatted()}) parSize(${layoutCoordinates.size.formatted()}) Y-posInParent:${(layoutCoordinates.positionInWindow().y - (sizedRect.top.value * 2f)).formatted()} anchors:(${anchors.value.keys})")
-                                if (sheetContentSize.value == IntSize.Zero) sheetContentSize.value = layoutCoordinates.size
-                                if (anchors.value.keys.last().absoluteValue > sheetContentSize.value.height) {
-                                    // remove all anchor points with height greater than actual sheet content
-                                    // (by only keeping (filterKeys { }) all that are smaller than actual sheet content
-                                    // and also add the _actual_ content size as EXPANDED position (negative(!) for bottomSheetContent !!!)
-                                    anchors.value = anchors.value.filterKeys { anchorPoint -> anchorPoint.absoluteValue < sheetContentSize.value.height }.toMutableMap().also { it[-1f * sheetContentSize.value.height] = SheetPosition.EXPANDED }
-                                }
-                            }
-                        ) {
-                            triangledDrawerHorizontalCanvas(BORDER.BOTTOM, swipeableState, anchors, drawerSize) // triangledDrawer above content
-                            content()
+
+        Box(Modifier
+            .offset(sizedRectDp.left, sizedRectDp.top)
+            .size(sizedRectDp.width, sizedRectDp.height)
+            .clipToBounds() // clip anything inside this Box to the size of this Box (might be worth commenting out for debugging)
+        ) {
+            val offsetFunc: Density.() -> IntOffset = {if (sheetContentSize.value != IntSize.Zero)  {
+                // if pulling up/left swipeableState.offset is negative (for BOTTOM/RIGHT)
+                when (border) {
+                    BORDER.TOP ->    { IntOffset(x = 0, y = ( -1 * sheetContentSize.value.height + swipeableState.offset.value.toInt())) }
+                    BORDER.BOTTOM -> { IntOffset(x = 0, y = ( +1 * sizedRect.height              + swipeableState.offset.value.toInt()))}
+                    BORDER.LEFT ->   { IntOffset(x =        ( -1 * sheetContentSize.value.width  + swipeableState.offset.value.toInt()), y = 0) }
+                    BORDER.RIGHT ->  { IntOffset(x =        ( +1 * sizedRect.width               + swipeableState.offset.value.toInt()), y = 0) }
+                }} else {
+                when (border) { // put outside clipped box to prevent flickering on first rendering
+                    BORDER.TOP ->    { IntOffset(x = 0, y = sizedRect.height) }
+                    BORDER.BOTTOM -> { IntOffset(x = 0, y = sizedRect.height)}
+                    BORDER.LEFT ->   { IntOffset(x =        sizedRect.width, y = 0) }
+                    BORDER.RIGHT ->  { IntOffset(x =        sizedRect.width, y = 0) }
+                }}
+            }
+            val rememberSheetContentSizeAndAdjustAnchorsFunc: (layoutCoordinates: LayoutCoordinates) -> Unit = { layoutCoordinates: LayoutCoordinates ->
+                // if the size of the swipeable sheet content is _smaller_ than the main size content of SwipeableBorders
+                // we can only know this AFTER first rendering was completed, because of "only once" measuring of jetpack compose
+                if (sheetContentSize.value == IntSize.Zero) {
+                    sheetContentSize.value = layoutCoordinates.size
+                }
+                    // remove all anchor points with height/width greater than actual sheet content
+                    // (by only keeping (filterKeys { }) all that are smaller than actual sheet content)
+                    // and also add the _actual_ content height/width as EXPANDED position (negative(!) for bottom/right SheetContent !!!)
+                when (border) {
+                    BORDER.TOP -> {
+                        if (anchors.value.keys.last().absoluteValue > sheetContentSize.value.height) {
+                            anchors.value = anchors.value.filterKeys { anchorPoint -> anchorPoint.absoluteValue < sheetContentSize.value.height }.toMutableMap()
+                                                        .also { it[+1f * sheetContentSize.value.height] = SheetPosition.EXPANDED }
                         }
                     }
-                }
-        } else if (border == BORDER.TOP) {
-            Box(Modifier
-                .offset(sizedRect.left, sizedRect.top)
-                .size(sizedRect.width, sizedRect.height) // TODO necessary?
-                .clipToBounds() // clip anything inside this Box to the size of this Box (might be worth commenting out for debugging)
-//                contentAlignment = Alignment.TopStart
-            ) {
-                Box(modifier = Modifier // swipe animation via offset
-                        // if pulling up/left swipeableState.offset is negative
-                        .let {
-                            if (sheetContentSize.value != IntSize.Zero)
-                                it.offset(x = 0.dp, ( -1f * sheetContentSize.value.height + swipeableState.offset.value).pxToDp())
-                            else it.offset(x = 0.dp, y = sizedRect.height) /* prevent flashing on first rendering where sheetContentSize is yet unknown */
+                    BORDER.BOTTOM -> {
+                        if (anchors.value.keys.last().absoluteValue > sheetContentSize.value.height) {
+                            anchors.value = anchors.value.filterKeys { anchorPoint -> anchorPoint.absoluteValue < sheetContentSize.value.height }.toMutableMap()
+                                                        .also { it[-1f * sheetContentSize.value.height] = SheetPosition.EXPANDED }
                         }
-                ) {
-                    Column(Modifier
-                        .onGloballyPositioned { layoutCoordinates ->
-                            // if the size of the swipeable sheet content is _smaller_ than the main size content of SwipeableBorders
-                            // we can only know this AFTER first rendering was completed, because of "only once" measuring of jetpack compose
-//println("swiped ${"%-6s".format("TOP")} at ${"%-19s".format(swipeableState.currentValue.toString())}: ${swipeableState.offset.value.formatted()} contSize(${sheetContentSize.value.formatted()}) parSize(${layoutCoordinates.size.formatted()}) Y-posInParent:${(layoutCoordinates.positionInWindow().y - (sizedRect.top.value * 2f)).formatted()} anchors:(${anchors.value.keys})")
-                            if (sheetContentSize.value == IntSize.Zero) sheetContentSize.value = layoutCoordinates.size
-                            if (anchors.value.keys.last().absoluteValue > sheetContentSize.value.height) {
-                                // remove all anchor points with height greater than actual sheet content
-                                // (by only keeping (filterKeys { }) all that are smaller than actual sheet content
-                                // and also add the _actual_ content size as EXPANDED position (positive(!) for topSheetContent !!!)
-                                anchors.value = anchors.value.filterKeys { anchorPoint -> anchorPoint.absoluteValue < sheetContentSize.value.height }.toMutableMap().also { it[+1f * sheetContentSize.value.height] = SheetPosition.EXPANDED }
-                            }
+                    }
+                    BORDER.LEFT -> {
+                        if (anchors.value.keys.last().absoluteValue > sheetContentSize.value.width) {
+                            anchors.value = anchors.value.filterKeys { anchorPoint -> anchorPoint.absoluteValue < sheetContentSize.value.width }.toMutableMap()
+                                                        .also { it[+1f * sheetContentSize.value.width] = SheetPosition.EXPANDED }
                         }
-                    ) {
-                        //Box(Modifier.sizeIn(maxHeight = sheetContentSize.value.height.pxToDp() - drawerSize).weight(1f)) {
-                        Box(Modifier.weight(1f, fill = false), contentAlignment = Alignment.BottomStart) {
-                            // we need this box and weight, as otherwise a Modifier.fillMaxXXX() on the content() will eat up the complete column space
-                            // and the triangledDrawerHorizontalCanvas will no more be visible
-                            // on the other hand, if the content has fixed size a weight with fill = true would give left over space to the content
-                            // at the bottom, so on swipe down the content would appear "last"
-                            content()
+                    }
+                    BORDER.RIGHT ->  {
+                        if (anchors.value.keys.last().absoluteValue > sheetContentSize.value.width) {
+                            anchors.value = anchors.value.filterKeys { anchorPoint -> anchorPoint.absoluteValue < sheetContentSize.value.width }.toMutableMap()
+                                                        .also { it[-1f * sheetContentSize.value.width] = SheetPosition.EXPANDED }
                         }
-                        triangledDrawerHorizontalCanvas(BORDER.TOP, swipeableState, anchors, drawerSize)
                     }
                 }
             }
-        } else {
-            throw NotImplementedError("not implemented")
-        }
-    }
-}
+            val triangledDrawerCanvas: (border: BORDER) -> @Composable () -> Unit = { border: BORDER ->
+                when (border) {
+                    BORDER.TOP    -> { { triangledDrawerHorizontalCanvas(border, swipeableState, anchors, drawerSize) } }
+                    BORDER.BOTTOM -> { { triangledDrawerHorizontalCanvas(border, swipeableState, anchors, drawerSize) } }
+                    BORDER.LEFT   -> { { triangledDrawerVerticalCanvas(border, swipeableState, anchors, drawerSize) } }
+                    BORDER.RIGHT  -> { { triangledDrawerVerticalCanvas(border, swipeableState, anchors, drawerSize) } }
+                }
+            }
+
+            Box(modifier = Modifier.offset(offsetFunc)) { // swipe animation via offset
+                when (border) {
+                    BORDER.TOP -> {
+                        Column(Modifier.onGloballyPositioned { layoutCoordinates: LayoutCoordinates ->
+//println("s    wiped ${"%-6s".format("TOP")} at ${"%-19s".format(swipeableState.currentValue.toString())}: ${swipeableState.offset.value.formatted()} contSize(${sheetContentSize.value.formatted()}) parSize(${layoutCoordinates.size.formatted()}) Y-posInParent:${(layoutCoordinates.positionInWindow().y - sizedRect.top).formatted()} anchors:(${anchors.value.keys})")
+                            rememberSheetContentSizeAndAdjustAnchorsFunc(layoutCoordinates)
+                        }) {
+                            Box(Modifier.weight(1f, fill = false), contentAlignment = Alignment.BottomStart) {
+                                // we need this box and weight, as otherwise a Modifier.fillMaxXXX() on the content() will eat up the complete column/row space
+                                // and the triangledDrawerHorizontalCanvas will no more be visible
+                                // on the other hand, if the content has fixed size a weight with fill = true would give left over space to the content,
+                                // so on swipe down the "gap" would appear first and only after swiping really far the content "eventually" appears
+                                content()
+                            }
+                            triangledDrawerCanvas(BORDER.TOP).invoke() // triangledDrawer after/below content
+                        }
+                    }
+                    BORDER.BOTTOM -> {
+                        Column(Modifier.onGloballyPositioned { layoutCoordinates: LayoutCoordinates ->
+//println("swiped ${"%-6s".format("BOTTOM")} at ${"%-19s".format(swipeableState.currentValue.toString())}: ${swipeableState.offset.value.formatted()} contSize(${sheetContentSize.value.formatted()}) parSize(${layoutCoordinates.size.formatted()}) Y-posInParent:${(layoutCoordinates.positionInWindow().y - sizedRect.top).formatted()} anchors:(${anchors.value.keys})")
+                            rememberSheetContentSizeAndAdjustAnchorsFunc(layoutCoordinates)
+                        }) {
+                            triangledDrawerCanvas(BORDER.BOTTOM).invoke() // triangledDrawer before/above content
+                            content()
+                        }
+
+                    }
+                    BORDER.LEFT -> {
+                        Row(Modifier.onGloballyPositioned { layoutCoordinates: LayoutCoordinates ->
+//println("swiped ${"%-6s".format("LEFT")} at ${"%-19s".format(swipeableState.currentValue.toString())}: ${swipeableState.offset.value.formatted()} contSize(${sheetContentSize.value.formatted()}) parSize(${layoutCoordinates.size.formatted()}) Y-posInParent:${(layoutCoordinates.positionInWindow().y - sizedRect.top).formatted()} anchors:(${anchors.value.keys})")
+                            rememberSheetContentSizeAndAdjustAnchorsFunc(layoutCoordinates)
+                        }) {
+                            Box(Modifier.weight(1f, fill = false), contentAlignment = Alignment.TopEnd) {
+                                // we need this box and weight, as otherwise a Modifier.fillMaxXXX() on the content() will eat up the complete column/row space
+                                // and the triangledDrawerHorizontalCanvas will no more be visible
+                                // on the other hand, if the content has fixed size a weight with fill = true would give left over space to the content,
+                                // so on swipe down the "gap" would appear first and only after swiping really far the content "eventually" appears
+                                content()
+                            }
+                            triangledDrawerCanvas(BORDER.LEFT).invoke() // triangledDrawer after/right of content
+                        }
+                    }
+                    BORDER.RIGHT -> {
+                        Row(Modifier.onGloballyPositioned { layoutCoordinates: LayoutCoordinates ->
+//println("swiped ${"%-6s".format("RIGHT")} at ${"%-19s".format(swipeableState.currentValue.toString())}: ${swipeableState.offset.value.formatted()} contSize(${sheetContentSize.value.formatted()}) parSize(${layoutCoordinates.size.formatted()}) Y-posInParent:${(layoutCoordinates.positionInWindow().y - sizedRect.top).formatted()} anchors:(${anchors.value.keys})")
+                            rememberSheetContentSizeAndAdjustAnchorsFunc(layoutCoordinates)
+                        }) {
+                            triangledDrawerCanvas(BORDER.RIGHT).invoke() // triangledDrawer before/left of content
+                            content()
+                        }
+                    }
+                }
+            }
+        } // clip Box
+    } // fun ComposableContent()
+} // class GlassLayerSheetClass

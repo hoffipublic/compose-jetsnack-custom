@@ -6,10 +6,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.onClick
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -18,13 +20,15 @@ import androidx.compose.ui.unit.dp
 import co.touchlab.kermit.Logger
 import com.example.jetsnack.ui.components.JetsnackSnackbar
 import com.example.jetsnack.ui.snackdetail.jetSnackSystemBarsPadding
-import com.hoffi.compose.common.component.ExampleContentHorizontal
 import com.hoffi.compose.common.component.BoxWithTextInCorners
-import com.hoffi.compose.common.component.ScrollColumn
+import com.hoffi.compose.common.component.ExampleContentHorizontal
 import com.hoffi.compose.common.glasslayer.GlassLayerSheetClass
-import com.hoffi.compose.common.layout.*
-import com.hoffi.compose.common.theme.HoffiMaterialTheme
 import com.hoffi.compose.common.glasslayer.GlassLayers
+import com.hoffi.compose.common.layout.BORDER
+import com.hoffi.compose.common.layout.BorderLayout
+import com.hoffi.compose.common.layout.BorderedContent
+import com.hoffi.compose.common.layout.SwipeableBorders
+import com.hoffi.compose.common.theme.HoffiMaterialTheme
 import kotlinx.datetime.Clock
 
 val globalCompositionLocalString = compositionLocalOf<String> { error("appState of ShowcaseApp() not set at top level") } // intId to String
@@ -58,6 +62,7 @@ fun ShowcaseApp(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: Muta
                             }
                         }
                     },
+                    drawerGesturesEnabled = false,
                     drawerContent = {
                         Card(modifier = Modifier.border(width = 2.dp, color = Color.Red).padding(5.dp)) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -171,20 +176,37 @@ fun ShowcaseApp(appWindowSize: MutableState<AppWindowSize>, appWindowTitle: Muta
                                     val partialSwipe = 0.25f
                                     SwipeableBorders(Modifier.fillMaxSize().padding(PaddingValues(boxBorderDp, boxBorderDp, boxBorderDp, boxBorderDp)), partiallyExpandedAt = partialSwipe,
                                         topSheetContent = GlassLayerSheetClass(BORDER.TOP, "hardcoded SwipeableBorders topSheet") {
-                                            //BoxWithTextInCorners("TopSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↑ topSheetContent", Modifier.offset(30.dp, 30.dp)) }
-                                            BoxWithTextInCorners("TopSwipeable ", Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↑ topSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            BoxWithTextInCorners("TopSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↑ topSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //BoxWithTextInCorners("TopSwipeable ", Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↑ topSheetContent", Modifier.offset(30.dp, 30.dp)) }
                                             //Box(Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) {}
                                             //Box(Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("topSheetContent", Modifier.offset(50.dp, 50.dp)) }
                                         },
                                         bottomSheetContent = GlassLayerSheetClass(BORDER.BOTTOM, "hardcoded SwipeableBorders bottomSheet") {
                                             //BoxWithTextInCorners("BottomSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
-                                            //BoxWithTextInCorners("BottomSwipeable ", Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
-                                            //Box(Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) {}
-                                            //Box(Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) {}
-                                            ScrollColumn {
-                                                BoxWithTextInCorners("BottomSwipeable ", Modifier.height(1000.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
-                                            }
-                                        }
+                                            BoxWithTextInCorners("BottomSwipeable ", Modifier.height(150.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //ScrollColumn(boxAndColumnModifier = Modifier) {
+                                            //    BoxWithTextInCorners("BottomSwipeable ", Modifier.height(1500.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ scroll bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //    //BoxWithTextInCorners("BottomSwipeable ", Modifier.fillMaxHeight().fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ scroll bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //    //// inside a Scrollable, if height less than main content height, you need to set the height on ScrollColumn also!!!
+                                            //    //BoxWithTextInCorners("BottomSwipeable ", Modifier.height(300.dp).fillMaxWidth().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("↓ scroll bottomSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //}
+                                        },
+                                        leftSheetContent = GlassLayerSheetClass(BORDER.LEFT, "hardcoded SwipeableBorders leftSheet") {
+                                            BoxWithTextInCorners("LeftSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("← leftSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //BoxWithTextInCorners("LeftSwipeable ", Modifier.width(150.dp).fillMaxHeight().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("← leftSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //ScrollRow(boxAndRowModifier = Modifier.width(500.dp)) {
+                                            //    BoxWithTextInCorners("LeftSwipeable ", Modifier.width(500.dp).fillMaxHeight().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("← scroll leftSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //}
+                                            //ScrollRow(boxAndRowModifier = Modifier) {
+                                            //    BoxWithTextInCorners("LeftSwipeable ", Modifier.width(2000.dp).fillMaxHeight().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("← scroll leftSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //    //// inside a Scrollable, if height less than main content height, you need to set the height on ScrollColumn also!!!
+                                            //    //BoxWithTextInCorners("LeftSwipeable ", Modifier.width(500.dp).fillMaxHeight().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("← scroll leftSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //}
+                                        },
+                                        rightSheetContent = GlassLayerSheetClass(BORDER.RIGHT, "hardcoded SwipeableBorders rightSheet") {
+                                            BoxWithTextInCorners("RightSwipeable", Modifier.fillMaxSize()                .padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("→ rightSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                            //BoxWithTextInCorners("RightSwipeable ", Modifier.width(150.dp).fillMaxHeight().padding(2.dp, 2.dp).background(Color.Red).border(3.dp, Color.White)) { Text("→ rightSheetContent", Modifier.offset(30.dp, 30.dp)) }
+                                        },
                                     ) {
                                         Box(
                                             Modifier.fillMaxSize().background(MaterialTheme.colors.surface),

@@ -14,11 +14,12 @@ import androidx.compose.ui.unit.*
 val NOCONTENT: @Composable () -> Unit = {}
 val NOCONTENTwithPadding: @Composable (PaddingValues) -> Unit = {}
 
-@Composable fun Dp.dpToPx(): Float      = with(LocalDensity.current) { this@dpToPx.toPx() }
-@Composable fun Int.pxToDp(): Dp        = with(LocalDensity.current) { this@pxToDp.toDp() }
-@Composable fun Float.pxToDp(): Dp      = with(LocalDensity.current) { this@pxToDp.toDp() }
-@Composable fun Size.toDpSize(): DpSize = with(LocalDensity.current) { this@toDpSize.toDpSize() }
-@Composable fun Rect.toDpRect(): DpRect = with(LocalDensity.current) { DpRect(left.toDp(), top.toDp(), right.toDp(), bottom.toDp()) }
+@Composable fun Dp.dpToPx(): Float         = with(LocalDensity.current) { this@dpToPx.toPx() }
+@Composable fun Int.pxToDp(): Dp           = with(LocalDensity.current) { this@pxToDp.toDp() }
+@Composable fun Float.pxToDp(): Dp         = with(LocalDensity.current) { this@pxToDp.toDp() }
+@Composable fun Size.toDpSize(): DpSize    = with(LocalDensity.current) { this@toDpSize.toDpSize() }
+@Composable fun Rect.toDpRect(): DpRect    = with(LocalDensity.current) { DpRect(left.toDp(), top.toDp(), right.toDp(), bottom.toDp()) }
+@Composable fun IntRect.toDpRect(): DpRect = with(LocalDensity.current) { DpRect(left.toDp(), top.toDp(), right.toDp(), bottom.toDp()) }
 
 fun LayoutCoordinates.rectInWindow() = Rect(this.positionInWindow(), this.size.toSize())
 fun Rect.isWidthFinite() : Boolean = !this.width.isInfinite() && !this.width.isNaN()

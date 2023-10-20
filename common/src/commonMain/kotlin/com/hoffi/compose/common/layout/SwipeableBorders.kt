@@ -6,7 +6,10 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
@@ -17,7 +20,6 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import com.accorddesk.frontend.ui.theme.hiddenFuncBackground
 import com.accorddesk.frontend.ui.theme.themeBasedAccentColorOpposite
-import com.hoffi.compose.common.formatted
 import com.hoffi.compose.common.glasslayer.GlassLayerSheet
 import com.hoffi.compose.common.glasslayer.GlassLayerSheetClass
 import com.hoffi.compose.common.glasslayer.RectSize
@@ -102,10 +104,20 @@ fun SwipeableBorders(
             }
         }
         if (leftSheetContent != GlassLayerSheetClass.NOCONTENT) {
-            //triangledDrawerVertical(boxConstraintsMaxWidth, swipeableStateLeft, drawerSize, horizontalLeftAnchors, BORDER.LEFT)
+            Box(Modifier
+                .padding(end = (boxConstraintsMaxWidth - drawerSize).coerceAtLeast(0.dp))
+                .width(drawerSize)
+            ) {
+                triangledDrawerVerticalCanvas(BORDER.LEFT, swipeableStateLeft, horizontalAnchorsLeft, drawerSize)
+            }
         }
         if (rightSheetContent != GlassLayerSheetClass.NOCONTENT) {
-            //triangledDrawerVertical(boxConstraintsMaxWidth, swipeableStateRight, drawerSize, horizontalRightAnchors, BORDER.RIGHT)
+            Box(Modifier
+                .padding(start = (boxConstraintsMaxWidth - drawerSize).coerceAtLeast(0.dp))
+                .width(drawerSize)
+            ) {
+                triangledDrawerVerticalCanvas(BORDER.RIGHT, swipeableStateRight, horizontalAnchorsRight, drawerSize)
+            }
         }
 
         // the swipeable Sheets (if given and visible)
@@ -136,7 +148,7 @@ fun triangledDrawerHorizontalCanvas(
     verticalAnchors: MutableState<Map<Float, SheetPosition>>,
     drawerSize: Dp,
 ) {
-    if (trianglesAtTopOrBottom != BORDER.TOP && trianglesAtTopOrBottom != BORDER.BOTTOM) throw Exception("illegal trianglesAtTopOrBottom BORDER '$trianglesAtTopOrBottom' in triangledDrawerHorizontal()")
+    if (trianglesAtTopOrBottom != BORDER.TOP && trianglesAtTopOrBottom != BORDER.BOTTOM) throw Exception("illegal trianglesAtTopOrBottom BORDER '$trianglesAtTopOrBottom' in triangledDrawerHorizontalCanvas()")
     Canvas(Modifier
         .fillMaxWidth()
         .height(drawerSize)
@@ -176,7 +188,7 @@ fun triangledDrawerHorizontalCanvas(
 
         val baseLength = 7.dp.toPx()
         val halfBase = baseLength / 2f
-        val horCen = canvasWidth / 2f
+        val center = canvasWidth / 2f
         val between = 15.dp.toPx()
         val padTop = 1.dp.toPx()
         val padBot = 0.dp.toPx()
@@ -187,14 +199,14 @@ fun triangledDrawerHorizontalCanvas(
             padStartEnd + between,
             padStartEnd + 2 * between,
             // center three triangles
-            horCen - between - halfBase,
-            horCen - halfBase,
-            horCen + between - halfBase,
+            center - between - halfBase,
+            center - halfBase,
+            center + between - halfBase,
             // right three triangles
             canvasWidth - padStartEnd - baseLength,
             canvasWidth - padStartEnd - between - baseLength,
             canvasWidth - padStartEnd - 2 * between - baseLength
-        ) else listOf(horCen - between - halfBase, horCen - halfBase, horCen + between - halfBase) // center three triangles
+        ) else listOf(center - between - halfBase, center - halfBase, center + between - halfBase) // center three triangles
         ) { // for body: drawing triangles
             if (    (trianglesAtTopOrBottom == BORDER.BOTTOM) && (verticalSwipeableState.currentValue == SheetPosition.HIDDEN) ||
                     (trianglesAtTopOrBottom == BORDER.TOP)    && (verticalSwipeableState.currentValue != SheetPosition.HIDDEN)
@@ -215,6 +227,106 @@ fun triangledDrawerHorizontalCanvas(
                     moveTo(x = x, y = padBot)
                     lineTo(x = x + baseLength, y = padBot)
                     lineTo(x = x + halfBase, y = canvasHeight - padTop)
+                }
+                drawPath(
+                    color = themeBasedAccentColorOpposite(),
+                    path = trianglePath
+                )
+            }
+        }
+    }
+}
+/** a colored area with small triangles (drawn on Canvas)<br/>
+ *  a) to indicate that there is something "swipeable"
+ *  b) to have a swipe anchor
+ */
+@Composable
+@OptIn(ExperimentalMaterialApi::class)
+fun triangledDrawerVerticalCanvas(
+    trianglesAtLeftOrRight: BORDER,
+    horizontalSwipeableState: SwipeableState<SheetPosition>,
+    horizontalAnchors: MutableState<Map<Float, SheetPosition>>,
+    drawerSize: Dp,
+) {
+    if (trianglesAtLeftOrRight != BORDER.LEFT && trianglesAtLeftOrRight != BORDER.RIGHT) throw Exception("illegal trianglesAtLeftOrRight BORDER '$trianglesAtLeftOrRight' in triangledDrawerVerticalCanvas()")
+    Canvas(Modifier
+        .fillMaxHeight()
+        .width(drawerSize)
+        .background(hiddenFuncBackground())
+        .swipeable(
+            state = horizontalSwipeableState,
+            anchors = horizontalAnchors.value,
+            // cannot take FractionalThreshold, because when sheet content is considerably smaller than main content (parent BoxWithConstraints)
+            // the threshold is still computed for that considerably bigger main content parent BoxWithConstraints
+            thresholds = { _, _ -> FixedThreshold(25.dp) },
+            orientation = Orientation.Horizontal,
+            resistance = null // resistance to get past max swipe position
+        )
+        .pointerInput(Unit) {
+            detectTapGestures(
+                onDoubleTap = { tapOffsetOnComposable ->
+                    when (horizontalSwipeableState.currentValue) {
+                        SheetPosition.HIDDEN -> {
+                            val target = if (horizontalAnchors.value.containsValue(SheetPosition.PARTIALLY_EXPANDED)) {
+                                SheetPosition.PARTIALLY_EXPANDED
+                            } else {
+                                SheetPosition.EXPANDED
+                            }
+                            appState.coroutineScope.launch { horizontalSwipeableState.animateTo(target) }
+
+                        }
+
+                        SheetPosition.PARTIALLY_EXPANDED -> appState.coroutineScope.launch { horizontalSwipeableState.animateTo(SheetPosition.HIDDEN) }
+                        SheetPosition.EXPANDED -> appState.coroutineScope.launch { horizontalSwipeableState.animateTo(SheetPosition.HIDDEN) }
+                    }
+                }
+            )
+        }
+    ) {
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+
+        val baseLength = 7.dp.toPx()
+        val halfBase = baseLength / 2f
+        val center = canvasHeight / 2f
+        val between = 15.dp.toPx()
+        val padTop = 1.dp.toPx()
+        val padBot = 0.dp.toPx()
+        val padStartEnd = 25.dp.toPx()
+        for (y in if (canvasHeight >= 120) listOf(
+            // top three triangles
+            padStartEnd,
+            padStartEnd + between,
+            padStartEnd + 2 * between,
+            // center three triangles
+            center - between - halfBase,
+            center - halfBase,
+            center + between - halfBase,
+            // bottom three triangles
+            canvasHeight - padStartEnd - baseLength,
+            canvasHeight - padStartEnd - between - baseLength,
+            canvasHeight - padStartEnd - 2 * between - baseLength
+        ) else listOf(center - between - halfBase, center - halfBase, center + between - halfBase) // center three triangles
+        ) { // for body: drawing triangles
+            if (    (trianglesAtLeftOrRight == BORDER.RIGHT) && (horizontalSwipeableState.currentValue == SheetPosition.HIDDEN) ||
+                    (trianglesAtLeftOrRight == BORDER.LEFT)  && (horizontalSwipeableState.currentValue != SheetPosition.HIDDEN)
+            ) {
+                // triangles pointing left
+                val trianglePath = Path().apply {
+                    moveTo(x = canvasWidth - padBot, y = y)
+                    lineTo(x = canvasWidth - padBot, y = y + baseLength)
+                    lineTo(x = padTop, y = y + halfBase)
+                }
+                drawPath(
+                    color = themeBasedAccentColorOpposite(),
+                    path = trianglePath
+                )
+            } else {
+                // triangles pointing right
+                val trianglePath = Path().apply {
+                    moveTo(x = padBot, y = y)
+                    lineTo(x = padBot, y = y + baseLength)
+                    lineTo(x = canvasWidth - padTop, y = y + halfBase)
                 }
                 drawPath(
                     color = themeBasedAccentColorOpposite(),
